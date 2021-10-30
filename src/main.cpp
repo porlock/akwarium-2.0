@@ -2,8 +2,6 @@
 #include <Adafruit_I2CDevice.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
-#include <string.h>
-
 
 #define DPIND_SOUNDOUT 6
 #define DPIN_TEMPIN 4
@@ -37,17 +35,6 @@ namespace hciRelay
 namespace screen
 {
     Adafruit_PCD8544 display = Adafruit_PCD8544(11, 10, 9, 8);
-
-    String convertToString(char* a, int size)
-    {
-        int i;
-        String s = "";
-        for (i = 0; i < size; i++) {
-            s = s + a[i];
-        }
-        return s;
-    }
-  
 
        constexpr byte fish[] PROGMEM = {
 		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
@@ -118,32 +105,32 @@ namespace screen
         clearScreen();   
     }
 
-    void showReadings(int bottomBarLenght, String name, double value, bool showRefreshIcon=0)
+    void showReadings(int bottomBarLenght, const char* name, float value, bool showRefreshIcon=0)
     {
         display.clearDisplay();
-        String bar;                
 
         display.setCursor(0,0);
         display.setTextColor(BLACK);
         display.setTextSize(1);
-        display.println(name + ":");
-        display.println("");
+        display.print(name); display.println(':');
+
+        display.println();
         display.setTextSize(3);
 
         if (value >=10) display.println(value,1);
         else display.println(value,2);
-        
-        for (int i = 0; i < bottomBarLenght; i++)
-	    {
-            bar = bar + '_';
-        }
-
-        display.setTextSize(1);
 
         if (showRefreshIcon)
 	  	{
+
 	        display.drawBitmap(73,6,refresh,16,8, BLACK);
-            display.println(bar);
+
+            display.setTextSize(1);
+            for (int i = 0; i < bottomBarLenght; i++)
+	        {
+                display.print('_');
+            }
+           
 	    }
         display.display();       
     }
@@ -184,23 +171,23 @@ namespace settings
 {
     struct phSettingsType
     {
-        double start;
-        double stop;
-        double interval;
-        double onTime;
+        float start;
+        float stop;
+        float interval;
+        float onTime;
     } phSettings{6.7, 6.5, 300, 3};
 
     struct tempSettingsType
     {
-        double start;
-        double stop;
+        float start;
+        float stop;
     };
 
     struct phCalibrationSettingsType
     {
-        double ph7V;
-        double ph4V;
-        double phFactor;
+        float ph7V;
+        float ph4V;
+        float phFactor;
     };
 
 
@@ -223,13 +210,14 @@ void loop()
 
     joystickType joystick;
     static int currentBarPozition=settings::screenSettings.barLenght;
-    static uint32_t nextUpdateRead, nextUpdateJoystick;
+    static uint32_t nextUpdateRead, nextUpdateJoystick = 0;
     static char readType = 'P';
     static int screenState = SCREEN_READ_3;
+    static bool tmpDelay=false;
 
     if (millis() > nextUpdateJoystick)
     {
-       nextUpdateJoystick = millis() + 100;       
+       nextUpdateJoystick = millis() + 300;       
        switch (joystick.readState())
        {
            case 'l':           
@@ -247,7 +235,7 @@ void loop()
     if (millis() > nextUpdateRead)
     {
         
-       nextUpdateRead = millis() + 1000;
+       nextUpdateRead = millis() + 500;
 
         switch(screenState){
             case SCREEN_READ_TEMP_1:
@@ -256,15 +244,21 @@ void loop()
             case SCREEN_READ_PH_2:
                 screen::showReadings(currentBarPozition,"Ph",7.5);
                 break;
-            case SCREEN_READ_3:
-                currentBarPozition--; 
+            case SCREEN_READ_3:                
+                if (tmpDelay)
+                {
+                    currentBarPozition--; 
+                    tmpDelay=false;
+                }
+                else {tmpDelay=true;}
+                
                 switch (readType)
                 {
                     case 'P':
-                        screen::showReadings(currentBarPozition,"Ph",currentBarPozition,true);
+                        screen::showReadings(currentBarPozition,"Ph",6,true);
                         break;
                     case 'T':
-                        screen::showReadings(currentBarPozition,"Temp",currentBarPozition,true);        
+                        screen::showReadings(currentBarPozition,"Temp",27,true);        
                         break;
                 }
         
