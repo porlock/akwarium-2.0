@@ -137,11 +137,16 @@ namespace screen
     void showReadings(int bottomBarLenght, const char* name, float value, iconsIndicators iconsIndicator, bool showRefreshIcon=0)
     {
         display.clearDisplay();
-
-        display.setCursor(0,0);
         display.setTextColor(BLACK);
         display.setTextSize(1);
+        
+        if (iconsIndicator.refill){display.setCursor(40,0); display.print("D");};
+        if (iconsIndicator.heater){display.setCursor(50,0); display.print("G");};
+        if (iconsIndicator.hci){display.setCursor(60,0); display.print("K");};
+
+        display.setCursor(0,0);
         display.print(name); display.println(':');
+    
 
         display.println();
         display.setTextSize(3);
@@ -462,6 +467,8 @@ MainScreen screenMain;
 OptionsScreen screenOptions;
 joystickType joystick;
 screen::iconsIndicators iconsIndicator;
+uint32_t nextUpdateProbe = 0;
+
 
 void setup()
 {
@@ -488,10 +495,13 @@ void loop()
 
     if ( g_currentScreen != ST_Options)
     {
-        double temperature = probing::readTemp();
-        double ph = probing::readPH();
-
-        control::refill(probing::readWaterLevel(), &iconsIndicator);
+        if (millis() > nextUpdateProbe)
+        {
+            nextUpdateProbe = millis() + 500;      
+            double temperature = probing::readTemp();
+            double ph = probing::readPH();
+            control::refill(probing::readWaterLevel(), &iconsIndicator);
+        }
     }
 
     if (g_currentScreen != g_nextScreen)
