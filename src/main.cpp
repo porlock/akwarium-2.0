@@ -16,10 +16,32 @@
 #define SCREEN_READ_TEMP_1 1
 #define SCREEN_READ_PH_2 2
 #define SCREEN_READ_3 3
-#define SCREEN_SETTINGS_4 4
-#define SCREEN_PH_CALLIBRATION_5 5
-#define SCREEN_OPTIONS_6 6
 
+#define SCREEN_SET_UP_TEMP 1
+#define SCREEN_SET_DOWN_TEMP 2
+#define SCREEN_SET_UP_PH 3
+#define SCREEN_SET_DOWN_PH 4
+#define SCREEN_SET_TIME_PH 5
+#define SCREEN_SET_PERIOD_PH 6
+
+#define SCREEN_PH_CALLIBRATION_5 10
+#define SCREEN_OPTIONS_6 11
+
+
+enum ScreenType
+{
+    ST_Main,
+    ST_Options
+};
+ 
+ScreenType g_currentScreen = ST_Main;
+ScreenType g_nextScreen = ST_Main;
+
+void setNextScreen(ScreenType screen)
+{
+    g_nextScreen = screen;
+}
+ 
 namespace heaterRelay
 {
     void start();
@@ -134,19 +156,32 @@ namespace screen
 	    }
         display.display();       
     }
-    
-}
 
+
+    void showSettings(int max, int min, const char* name, float value)
+    {
+        display.clearDisplay();
+        display.setTextSize(1);
+	    display.println("USTAWIENIA");
+  	    display.println(name);
+		display.print("od "); display.print(min); display.print(" do "); display.println(max);
+        display.println();
+		display.setTextSize(2);
+		display.println(value);   
+        display.display(); 
+    }
+}
 class joystickType
 {
     private:
-        int horizontal, vertical;
+        int horizontal, vertical, select;
         char status = 'c';
-        bool hasChanged;
-        void readAnalog()
+        char prevStatus = 'c';
+        void readPins()
         {
             horizontal = analogRead(APIN_JOY_X);
 	        vertical = analogRead(APIN_JOY_Y);
+            select = digitalRead(DPIN_SELECT);            
         }
         void beep(){
             for (unsigned long go = millis(); millis() - go < 100; analogWrite(DPIND_SOUNDOUT, 50));
@@ -156,12 +191,19 @@ class joystickType
     public:
         char readState()
         {
-            readAnalog();
-            if (horizontal >700 ) {status = 'l'; beep();}
-            else if (horizontal <300) {status = 'r'; beep();}
+            readPins();
+            if (!select) {status = 'p'; }
+            else if (horizontal >700 ) {status = 'l'; }
+            else if (horizontal <300) {status = 'r'; }
             else if (vertical > 700) {status = 'd';}
             else if (vertical < 300) {status = 'u';}
             else {status = 'c';}
+          
+            if (status == prevStatus){
+                return 'c';                
+            }
+            prevStatus=status;            
+            beep();
             return status;
         }
     
@@ -171,17 +213,17 @@ namespace settings
 {
     struct phSettingsType
     {
-        float start;
-        float stop;
+        float up;
+        float down;
         float interval;
         float onTime;
     } phSettings{6.7, 6.5, 300, 3};
 
-    struct tempSettingsType
+    struct temptSettingsType
     {
-        float start;
-        float stop;
-    };
+        float up;
+        float down;
+    }tempSettings{27,25.5};
 
     struct phCalibrationSettingsType
     {
@@ -198,6 +240,178 @@ namespace settings
 
 };
 
+
+class MainScreen
+{
+    int m_currentBarPozition = settings::screenSettings.barLenght;
+    uint32_t m_nextUpdateRead = 0;
+    uint32_t m_nextUpdateJoystick = 0;
+    char m_readType = 'P';
+    int m_screenState = SCREEN_READ_3;
+ 
+    public:
+ 
+    void render()
+    {
+        if (millis() > m_nextUpdateRead)
+        {   
+            m_nextUpdateRead = millis() + 1000;
+            switch(m_screenState)
+            {
+                case SCREEN_READ_TEMP_1:
+                    screen::showReadings(m_currentBarPozition,"Temp",26.7);
+                    break;
+                case SCREEN_READ_PH_2:
+                    screen::showReadings(m_currentBarPozition,"Ph",7.5);
+                    break;
+                case SCREEN_READ_3:
+                    m_currentBarPozition--; 
+                    switch (m_readType)
+                    {
+                        case 'P':
+                            screen::showReadings(m_currentBarPozition,"Ph",m_currentBarPozition,true);
+                            break;
+                        case 'T':
+                            screen::showReadings(m_currentBarPozition,"Temp",m_currentBarPozition,true);        
+                            break;
+                    }
+            
+                    if  (m_currentBarPozition==0) {
+                        m_currentBarPozition=settings::screenSettings.barLenght;
+                        if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
+                        }
+                    break;
+            }
+ 
+        }  
+    }
+ 
+    void control(char joyState)
+    {
+        if (millis() > m_nextUpdateJoystick)
+        {
+            m_nextUpdateJoystick = millis() + 100;       
+            switch (joyState)
+            {
+                case 'l':           
+                m_screenState--;
+                if (m_screenState < SCREEN_READ_TEMP_1) { m_screenState= SCREEN_READ_3;}
+                break;
+                case 'r':
+                m_screenState++;
+                if (m_screenState > SCREEN_READ_3) { m_screenState = SCREEN_READ_TEMP_1;}
+                break;
+                case 'p':
+                setNextScreen(ScreenType::ST_Options);
+                break;
+            }
+        }
+    }
+};
+ 
+ 
+class OptionsScreen
+{
+    int m_currentBarPozition = settings::screenSettings.barLenght;
+    uint32_t m_nextUpdateRead = 0;
+    uint32_t m_nextUpdateJoystick = 0;
+    int m_screenState = SCREEN_SET_UP_TEMP;
+    settings::temptSettingsType temptSettingsType;
+
+    void changeSetting (int screenState,bool add=true, double grade=0.1)
+    {   
+        switch(screenState)
+        {
+            case SCREEN_SET_UP_TEMP:
+                if (add){temptSettingsType.up=temptSettingsType.up+grade;} else {temptSettingsType.up=temptSettingsType.up-grade;}
+            break;
+            case SCREEN_SET_DOWN_TEMP:
+            
+            break;
+            case SCREEN_SET_UP_PH:
+            
+            break;
+            case SCREEN_SET_DOWN_PH:
+            
+            break;
+            case SCREEN_SET_TIME_PH:
+            
+            break;
+            case SCREEN_SET_PERIOD_PH:
+            
+            break;
+        }
+    }
+
+
+
+
+    public:
+ 
+    void render()
+    {    
+            switch(m_screenState)
+            {
+                case SCREEN_SET_UP_TEMP:
+                screen::showSettings(35,20,"Gor temp (C):",temptSettingsType.up);
+                break;
+                case SCREEN_SET_DOWN_TEMP:
+                screen::showSettings(35,20,"Dol temp (C):",1);
+                break;
+                case SCREEN_SET_UP_PH:
+                screen::showSettings(0,14,"Gor ph:",1);
+                break;
+                case SCREEN_SET_DOWN_PH:
+                screen::showSettings(0,14,"Dol ph:",1);
+                break;
+                case SCREEN_SET_TIME_PH:
+                screen::showSettings(0,60,"Czas ph (s):",1);
+                break;
+                case SCREEN_SET_PERIOD_PH:
+                screen::showSettings(0,20,"Czas ph (m):",1);
+                break;
+            }
+         
+         
+
+        
+    }
+
+ 
+    void control(char joyState)
+    {
+        if (millis() > m_nextUpdateJoystick)
+        {
+            
+            m_nextUpdateJoystick = millis() + 100;       
+            switch (joyState)
+            {
+                case 'l':           
+                m_screenState--;
+                if (m_screenState < SCREEN_SET_UP_TEMP) { m_screenState= SCREEN_SET_PERIOD_PH;}
+                break;
+                case 'r':
+                m_screenState++;
+                if (m_screenState > SCREEN_SET_PERIOD_PH) { m_screenState = SCREEN_SET_UP_TEMP;}
+                break;
+                case 'u':
+                    changeSetting(m_screenState);
+                break;
+                case 'd':
+                    changeSetting(m_screenState,false);
+                break;
+                case 'p':
+                setNextScreen(ScreenType::ST_Main);
+                break;
+            }
+        }
+    }
+};
+ 
+MainScreen screenMain;
+OptionsScreen screenOptions;
+joystickType joystick;
+
 void setup()
 {
     screen::initializeScreen();
@@ -207,68 +421,23 @@ void setup()
 
 void loop()
 { 
-
-    joystickType joystick;
-    static int currentBarPozition=settings::screenSettings.barLenght;
-    static uint32_t nextUpdateRead, nextUpdateJoystick = 0;
-    static char readType = 'P';
-    static int screenState = SCREEN_READ_3;
-    static bool tmpDelay=false;
-
-    if (millis() > nextUpdateJoystick)
+    
+    switch(g_currentScreen)
     {
-       nextUpdateJoystick = millis() + 300;       
-       switch (joystick.readState())
-       {
-           case 'l':           
-            screenState--;
-            if (screenState < SCREEN_READ_TEMP_1) { screenState= SCREEN_READ_3;}
+        case ST_Main:
+            screenMain.control(joystick.readState());
+            screenMain.render();
             break;
-           case 'r':
-            screenState++;
-            if (screenState > SCREEN_READ_3) { screenState = SCREEN_READ_TEMP_1;}
+ 
+        case ST_Options:
+            screenOptions.control(joystick.readState());
+            screenOptions.render();
             break;
-       }
     }
-
-
-    if (millis() > nextUpdateRead)
+ 
+    if (g_currentScreen != g_nextScreen)
     {
-        
-       nextUpdateRead = millis() + 500;
-
-        switch(screenState){
-            case SCREEN_READ_TEMP_1:
-                screen::showReadings(currentBarPozition,"Temp",26.7);
-                break;
-            case SCREEN_READ_PH_2:
-                screen::showReadings(currentBarPozition,"Ph",7.5);
-                break;
-            case SCREEN_READ_3:                
-                if (tmpDelay)
-                {
-                    currentBarPozition--; 
-                    tmpDelay=false;
-                }
-                else {tmpDelay=true;}
-                
-                switch (readType)
-                {
-                    case 'P':
-                        screen::showReadings(currentBarPozition,"Ph",6,true);
-                        break;
-                    case 'T':
-                        screen::showReadings(currentBarPozition,"Temp",27,true);        
-                        break;
-                }
-        
-                if  (currentBarPozition==0) {
-                    currentBarPozition=settings::screenSettings.barLenght;
-                    if (readType == 'T') {readType = 'P';} else {readType = 'T';}
-                    }
-                break;
-        }
-
+        g_currentScreen = g_nextScreen;
     }
 
 }

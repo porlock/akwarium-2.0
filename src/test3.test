@@ -1,0 +1,98 @@
+enum ScreenType
+{
+    ST_Main,
+    ST_Options
+};
+ 
+ScreenType g_currentScreen = ST_Main;
+ScreenType g_nextScreen = ST_Main;
+void setNextScreen(ScreenType screen)
+{
+    g_nextScreen = screen;
+}
+ 
+void mainScreenHandler(char joyState)
+{
+    int currentBarPozition = settings::screenSettings.barLenght;
+    uint32_t nextUpdateRead = 0;
+    uint32_t nextUpdateJoystick = 0;
+    char readType = 'P';
+    int screenState = SCREEN_READ_3;
+ 
+    if (millis() > nextUpdateRead)
+    {   
+        nextUpdateRead = millis() + 1000;
+        switch(screenState)
+        {
+            case SCREEN_READ_TEMP_1:
+                screen::showReadings(currentBarPozition,"Temp",26.7);
+                break;
+            case SCREEN_READ_PH_2:
+                screen::showReadings(currentBarPozition,"Ph",7.5);
+                break;
+            case SCREEN_READ_3:
+                currentBarPozition--; 
+                switch (readType)
+                {
+                    case 'P':
+                        screen::showReadings(currentBarPozition,"Ph",currentBarPozition,true);
+                        break;
+                    case 'T':
+                        screen::showReadings(currentBarPozition,"Temp",currentBarPozition,true);        
+                        break;
+                }
+        
+                if  (currentBarPozition==0) {
+                    currentBarPozition=settings::screenSettings.barLenght;
+                    if (readType == 'T') {readType = 'P';} else {readType = 'T';}
+                    }
+                break;
+        }
+ 
+ 
+        if (millis() > nextUpdateJoystick)
+        {
+            nextUpdateJoystick = millis() + 100;       
+            switch (joyState)
+            {
+                case 'l':           
+                screenState--;
+                if (screenState < SCREEN_READ_TEMP_1) { screenState= SCREEN_READ_3;}
+                break;
+                case 'r':
+                screenState++;
+                if (screenState > SCREEN_READ_3) { screenState = SCREEN_READ_TEMP_1;}
+                break;
+ 
+                case 'u':
+                setNextScreen(ScreenType::ST_Options);
+                break;
+            }
+        }
+    }
+}
+ 
+void optionsScreenHandler(char joyState)
+{
+}
+ 
+void loop()
+{ 
+    joystickType joystick;
+    
+    switch(g_currentScreen)
+    {
+        case ST_Main:
+            mainScreenHandler(joystick.readState());
+            break;
+ 
+        case ST_Options:
+            optionsScreenHandler(joystick.readState());
+            break;
+    }
+ 
+    if (g_currentScreen != g_nextScreen)
+    {
+        g_currentScreen = g_nextScreen;
+    }
+}
