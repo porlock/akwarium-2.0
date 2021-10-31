@@ -33,7 +33,7 @@ enum ScreenType
     ST_Main,
     ST_Options
 };
- 
+
 ScreenType g_currentScreen = ST_Main;
 ScreenType g_nextScreen = ST_Main;
 
@@ -57,6 +57,13 @@ namespace hciRelay
 namespace screen
 {
     Adafruit_PCD8544 display = Adafruit_PCD8544(11, 10, 9, 8);
+
+
+    struct iconsIndicators{
+        bool refill;
+        bool hci;
+        bool heater;
+    };
 
        constexpr byte fish[] PROGMEM = {
 		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
@@ -127,7 +134,7 @@ namespace screen
         clearScreen();   
     }
 
-    void showReadings(int bottomBarLenght, const char* name, float value, bool showRefreshIcon=0)
+    void showReadings(int bottomBarLenght, const char* name, float value, iconsIndicators iconsIndicator, bool showRefreshIcon=0)
     {
         display.clearDisplay();
 
@@ -170,6 +177,15 @@ namespace screen
 		display.println(value);   
         display.display(); 
     }
+
+    void showReffiling(){
+            display.clearDisplay();
+    		display.setTextSize(1);
+	        display.println("Reffiling");   
+            display.println("watter");   
+            display.display(); 
+    }
+
 }
 class joystickType
 {
@@ -209,6 +225,44 @@ class joystickType
     
 };
 
+namespace probing{
+
+    double readPH()
+    {
+        
+    }
+
+    double readTemp()
+    {
+        
+    }
+
+    double readWaterLevel()
+    {
+        return true;
+    }
+}
+
+namespace control{
+    
+    void ph(double ph){
+
+    }
+
+    void refill(bool waterLevel, screen::iconsIndicators* iconsIndicator )
+    {
+        if (waterLevel){
+             int i=1;
+             iconsIndicator->refill=true;
+        }
+        else {
+            int i=0;
+            iconsIndicator->refill=false;
+        }
+    }
+
+}
+
 namespace settings
 {
     struct phSettingsType
@@ -247,32 +301,35 @@ class MainScreen
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
     char m_readType = 'P';
-    int m_screenState = SCREEN_READ_3;
+    int m_screenState = SCREEN_READ_3;        
  
+    
+
     public:
  
-    void render()
+    void render( screen::iconsIndicators iconsIndicator)
     {
         if (millis() > m_nextUpdateRead)
         {   
+            Serial.println(iconsIndicator.refill);
             m_nextUpdateRead = millis() + 1000;
             switch(m_screenState)
             {
                 case SCREEN_READ_TEMP_1:
-                    screen::showReadings(m_currentBarPozition,"Temp",26.7);
+                    screen::showReadings(m_currentBarPozition,"Temp",26.7, iconsIndicator );
                     break;
                 case SCREEN_READ_PH_2:
-                    screen::showReadings(m_currentBarPozition,"Ph",7.5);
+                    screen::showReadings(m_currentBarPozition,"Ph",7.5, iconsIndicator);
                     break;
                 case SCREEN_READ_3:
                     m_currentBarPozition--; 
                     switch (m_readType)
                     {
                         case 'P':
-                            screen::showReadings(m_currentBarPozition,"Ph",m_currentBarPozition,true);
+                            screen::showReadings(m_currentBarPozition,"Ph",m_currentBarPozition, iconsIndicator, true);
                             break;
                         case 'T':
-                            screen::showReadings(m_currentBarPozition,"Temp",m_currentBarPozition,true);        
+                            screen::showReadings(m_currentBarPozition,"Temp",m_currentBarPozition,iconsIndicator, true);        
                             break;
                     }
             
@@ -343,9 +400,6 @@ class OptionsScreen
         }
     }
 
-
-
-
     public:
  
     void render()
@@ -368,13 +422,9 @@ class OptionsScreen
                 screen::showSettings(0,60,"Czas ph (s):",1);
                 break;
                 case SCREEN_SET_PERIOD_PH:
-                screen::showSettings(0,20,"Czas ph (m):",1);
+                screen::showSettings(0,20,"Okres ph (m):",1);
                 break;
             }
-         
-         
-
-        
     }
 
  
@@ -411,6 +461,7 @@ class OptionsScreen
 MainScreen screenMain;
 OptionsScreen screenOptions;
 joystickType joystick;
+screen::iconsIndicators iconsIndicator;
 
 void setup()
 {
@@ -421,12 +472,12 @@ void setup()
 
 void loop()
 { 
-    
+
     switch(g_currentScreen)
     {
         case ST_Main:
             screenMain.control(joystick.readState());
-            screenMain.render();
+            screenMain.render(iconsIndicator);
             break;
  
         case ST_Options:
@@ -434,7 +485,15 @@ void loop()
             screenOptions.render();
             break;
     }
- 
+
+    if ( g_currentScreen != ST_Options)
+    {
+        double temperature = probing::readTemp();
+        double ph = probing::readPH();
+
+        control::refill(probing::readWaterLevel(), &iconsIndicator);
+    }
+
     if (g_currentScreen != g_nextScreen)
     {
         g_currentScreen = g_nextScreen;
