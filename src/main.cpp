@@ -316,10 +316,9 @@ class MainScreen
  
     void render( screen::iconsIndicators iconsIndicator)
     {
-        if (millis() > m_nextUpdateRead)
+        if (millis() - m_nextUpdateRead > 1000)
         {   
-            
-            m_nextUpdateRead = millis() + 1000;
+            m_nextUpdateRead = millis();
             switch(m_screenState)
             {
                 case SCREEN_READ_TEMP_1:
@@ -352,9 +351,9 @@ class MainScreen
  
     void control(char joyState)
     {
-        if (millis() > m_nextUpdateJoystick)
+        if (millis() - m_nextUpdateJoystick > 100)
         {
-            m_nextUpdateJoystick = millis() + 100;       
+            m_nextUpdateJoystick = millis();       
             switch (joyState)
             {
                 case 'l':           
@@ -447,10 +446,10 @@ class OptionsScreen
  
     void control(char joyState)
     {
-        if (millis() > m_nextUpdateJoystick)
+        if (millis() - m_nextUpdateJoystick > 100)
         {
             
-            m_nextUpdateJoystick = millis() + 100;       
+            m_nextUpdateJoystick = millis();       
             switch (joyState)
             {
                 case 'l':           
@@ -530,9 +529,9 @@ void loop()
 
     if ( g_currentScreen != ST_Options)
     {
-        if (millis() > nextUpdateProbe)
+        if (millis() - nextUpdateProbe > 500)
         {
-            nextUpdateProbe = millis() + 500;      
+            nextUpdateProbe = millis();      
             double temperature = probing::readTemp();
             double ph = probing::readPH();
             control::refill(probing::readWaterLevel(), &iconsIndicator);
