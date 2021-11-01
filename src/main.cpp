@@ -2,6 +2,7 @@
 #include <Adafruit_I2CDevice.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
+#include <EEPROM.h>
 
 #define DPIND_SOUNDOUT 6
 #define DPIN_TEMPIN 4
@@ -31,7 +32,8 @@
 enum ScreenType
 {
     ST_Main,
-    ST_Options
+    ST_Options,
+    ST_Save,
 };
 
 ScreenType g_currentScreen = ST_Main;
@@ -183,12 +185,14 @@ namespace screen
         display.display(); 
     }
 
-    void showReffiling(){
-            display.clearDisplay();
-    		display.setTextSize(1);
-	        display.println("Reffiling");   
-            display.println("watter");   
-            display.display(); 
+    void showSave()
+    {
+        display.clearDisplay();
+        display.setTextSize(1);
+		display.println("Ustawienia");
+        display.println("zapisane");   
+        display.display();     
+        delay(1500);  
     }
 
 }
@@ -265,10 +269,9 @@ namespace control{
             iconsIndicator->refill=false;
         }
     }
-
 }
 
-namespace settings
+struct settingsType
 {
     struct phSettingsType
     {
@@ -289,20 +292,19 @@ namespace settings
         float ph7V;
         float ph4V;
         float phFactor;
-    };
-
+    }phCalibrationSettings {0,0,0};
 
     struct screenSettingsType
     {
         int barLenght;        
     } screenSettings{13};
 
-};
+}settings;
 
 
 class MainScreen
 {
-    int m_currentBarPozition = settings::screenSettings.barLenght;
+    int m_currentBarPozition = settings.screenSettings.barLenght;
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
     char m_readType = 'P';
@@ -316,7 +318,7 @@ class MainScreen
     {
         if (millis() > m_nextUpdateRead)
         {   
-            Serial.println(iconsIndicator.refill);
+            
             m_nextUpdateRead = millis() + 1000;
             switch(m_screenState)
             {
@@ -339,7 +341,7 @@ class MainScreen
                     }
             
                     if  (m_currentBarPozition==0) {
-                        m_currentBarPozition=settings::screenSettings.barLenght;
+                        m_currentBarPozition=settings.screenSettings.barLenght;
                         if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
                         }
                     break;
@@ -374,18 +376,21 @@ class MainScreen
  
 class OptionsScreen
 {
-    int m_currentBarPozition = settings::screenSettings.barLenght;
+
+    int m_currentBarPozition = settings->screenSettings.barLenght;
+    
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
-    int m_screenState = SCREEN_SET_UP_TEMP;
-    settings::temptSettingsType temptSettingsType;
+    int m_screenState = SCREEN_SET_UP_TEMP;    
+    settingsType *settings;
+    
 
     void changeSetting (int screenState,bool add=true, double grade=0.1)
     {   
         switch(screenState)
         {
             case SCREEN_SET_UP_TEMP:
-                if (add){temptSettingsType.up=temptSettingsType.up+grade;} else {temptSettingsType.up=temptSettingsType.up-grade;}
+                if (add){settings->tempSettings.up=settings->tempSettings.up+grade;} else {settings->tempSettings.up=settings->tempSettings.up-grade;}
             break;
             case SCREEN_SET_DOWN_TEMP:
             
@@ -406,13 +411,20 @@ class OptionsScreen
     }
 
     public:
- 
+    
+    OptionsScreen(settingsType& _settings)
+    {
+        settings = &_settings;        
+    }
+    
+
+
     void render()
     {    
             switch(m_screenState)
             {
                 case SCREEN_SET_UP_TEMP:
-                screen::showSettings(35,20,"Gor temp (C):",temptSettingsType.up);
+                screen::showSettings(35,20,"Gor temp (C):",settings->tempSettings.up);
                 break;
                 case SCREEN_SET_DOWN_TEMP:
                 screen::showSettings(35,20,"Dol temp (C):",1);
@@ -456,15 +468,32 @@ class OptionsScreen
                     changeSetting(m_screenState,false);
                 break;
                 case 'p':
-                setNextScreen(ScreenType::ST_Main);
+                setNextScreen(ScreenType::ST_Save);
                 break;
             }
         }
     }
 };
+
+class SaveScreen
+{
+    public:
+    void render()
+    {
+        screen::showSave();
+    }
+
+    void control(settingsType settings)
+    {
+         EEPROM.put(0, settings);  
+         setNextScreen(ScreenType::ST_Main);       
+    }
+};
+
  
 MainScreen screenMain;
-OptionsScreen screenOptions;
+OptionsScreen screenOptions (settings);
+SaveScreen screenSave;
 joystickType joystick;
 screen::iconsIndicators iconsIndicator;
 uint32_t nextUpdateProbe = 0;
@@ -475,6 +504,7 @@ void setup()
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
+    EEPROM.get( 0, settings);
 }
 
 void loop()
@@ -491,6 +521,11 @@ void loop()
             screenOptions.control(joystick.readState());
             screenOptions.render();
             break;
+         
+        case ST_Save:
+            screenSave.control(settings);
+            screenSave.render();
+            break;    
     }
 
     if ( g_currentScreen != ST_Options)
@@ -501,6 +536,7 @@ void loop()
             double temperature = probing::readTemp();
             double ph = probing::readPH();
             control::refill(probing::readWaterLevel(), &iconsIndicator);
+            Serial.println(settings.tempSettings.up);
         }
     }
 
