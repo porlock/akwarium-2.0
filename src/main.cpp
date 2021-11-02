@@ -336,7 +336,7 @@ struct SettingsType
     {6.7f, 6.5f, 300, 3},
     {27.0f,25.5f},
     {0.00f,0.00f,0.00f},
-    {13}
+    {15}
 };
 
 
@@ -350,9 +350,8 @@ class MainScreen
         begin= tempScreen,
         end = carouselScreen
     };
-    SettingsType *settingsPointer;
-    uint16_t m_currentBarPosition = settingsPointer->screenSettings.barLenght;
-    int test = settingsPointer->screenSettings.barLenght;
+    const SettingsType *settingsPointer;
+    uint16_t m_currentBarPosition = 0;
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
     char m_readType = 'P';
@@ -362,10 +361,6 @@ class MainScreen
  
     void render()
     {
-
-        Serial.println(settingsPointer->screenSettings.barLenght);
-        Serial.println(m_currentBarPosition);
-        Serial.println(test);
         if (millis() - m_nextUpdateRead > 1000)
         {   
             m_nextUpdateRead = millis();
@@ -387,7 +382,8 @@ class MainScreen
                         case 'T':
                             screen::showReadings(m_currentBarPosition,"Temp",m_currentBarPosition, true);        
                             break;
-                    }                                        
+                    }                
+                    //Serial.println(m_currentBarPosition);                        
                     if  (m_currentBarPosition==0) {                             
                         m_currentBarPosition=settingsPointer->screenSettings.barLenght;
                             if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
@@ -422,6 +418,7 @@ class MainScreen
     MainScreen(SettingsType& _settings)
     {
         settingsPointer = &_settings;        
+        m_currentBarPosition = settingsPointer->screenSettings.barLenght;        
     }
 };
  
