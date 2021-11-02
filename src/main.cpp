@@ -171,7 +171,7 @@ namespace screen
     }
 
 
-    void showSettings(float minValue, float maxValue, const char* name, float value)
+    void showSettings(uint16_t minValue, uint16_t maxValue, const char* name, float value)
     {
         display.clearDisplay();
         display.setTextSize(1);
@@ -296,33 +296,38 @@ namespace control{
 
 struct SettingsType
 {
-    struct PhSettingsType
+    struct phSettingsType
     {
         float up;
         float down;
         uint16_t interval;
         uint16_t onTime;
-    } phSettings{6.7f, 6.5f, 300, 3};
+    }phSettings;
 
-    struct TemptSettingsType
+    struct tempSettingsType
     {
         float up;
         float down;
-    }tempSettings{27.0f,25.5f};
+    }tempSettings;
 
-    struct PhCalibrationSettingsType
+    struct phCalibrationSettingsType
     {
         float ph7V;
         float ph4V;
         float phFactor;
-    }phCalibrationSettings {0.00f,0.00f,0.00f};
+    }phCalibrationSettings;
 
-    struct ScreenSettingsType
+    struct screenSettingsType
     {
         uint16_t barLenght;        
-    } screenSettings{13};
+    }screenSettings;
 
-}settings;
+}settings = {
+    {6.7f, 6.5f, 300, 3},
+    {27.0f,25.5f},
+    {0.00f,0.00f,0.00f},
+    {13}
+};
 
 
 class MainScreen
@@ -335,6 +340,7 @@ class MainScreen
     };
 
     uint16_t m_currentBarPozition = settings.screenSettings.barLenght;
+
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
     char m_readType = 'P';
@@ -368,10 +374,11 @@ class MainScreen
                             screen::showReadings(m_currentBarPozition,"Temp",m_currentBarPozition, true);        
                             break;
                     }
-            
-                    if  (m_currentBarPozition==0) {
+                    Serial.print ("barLenght");  Serial.println(settings.screenSettings.barLenght);
+                    Serial.print ("m_currentBarPozition"); Serial.println(m_currentBarPozition);
+                    if  (m_currentBarPozition==0) {                        
                         m_currentBarPozition=settings.screenSettings.barLenght;
-                        if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
+                            if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
                         }
                     break;
             }
@@ -413,8 +420,6 @@ class OptionsScreen
     setPhTime = 5 ,
     setPhPeriod = 6
     };
-
-    uint16_t m_currentBarPozition = settings->screenSettings.barLenght;
     
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
