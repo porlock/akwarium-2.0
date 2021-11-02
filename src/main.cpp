@@ -6,7 +6,7 @@
 
 
 enum Pins : uint16_t{
-    eDigitalPinSountOut=6,
+    eDigitalPinSoundOut=6,
     eDigitalPinTempIn=4,
     eDigitalPinJoySelect=12,
     eAnalogPinJoyX=0,
@@ -39,13 +39,13 @@ enum JoyStatus
 
 enum ScreenType
 {
-    eMainScreen,
-    eSettingsScreen,
-    eSaveScreen,
+    eScreenMain,
+    eScreenSettings,
+    eScreenSave,
 };
 
-ScreenType g_currentScreen = eMainScreen;
-ScreenType g_nextScreen = eMainScreen;
+ScreenType g_currentScreen = eScreenMain;
+ScreenType g_nextScreen = eScreenMain;
 
 void setNextScreen(ScreenType screen)
 {
@@ -218,8 +218,9 @@ class JoystickType
             select = digitalRead(Pins::eDigitalPinJoySelect);            
         }
         void beep(){
-            for (unsigned long go = millis(); millis() - go < 100; analogWrite(Pins::eDigitalPinSountOut, 50));
-            digitalWrite(Pins::eDigitalPinSountOut, LOW);
+            analogWrite(Pins::eDigitalPinSoundOut, 50);
+            delay(100);
+            digitalWrite(Pins::eDigitalPinSoundOut, LOW);
         }
    
     public:
@@ -246,7 +247,7 @@ class JoystickType
 
 namespace probing{
 
-    struct readingsType{
+    struct ReadingsType{
         float ph;
         float temp;
         bool waterLevel;
@@ -307,7 +308,7 @@ namespace control{
 
 struct SettingsType
 {
-    struct phSettingsType
+    struct PhSettingsType
     {
         float up;
         float down;
@@ -315,20 +316,20 @@ struct SettingsType
         uint16_t onTime;
     }phSettings;
 
-    struct tempSettingsType
+    struct TempSettingsType
     {
         float up;
         float down;
     }tempSettings;
 
-    struct phCalibrationSettingsType
+    struct PhCalibrationSettingsType
     {
         float ph7V;
         float ph4V;
         float phFactor;
     }phCalibrationSettings;
 
-    struct screenSettingsType
+    struct ScreenSettingsType
     {
         uint16_t barLenght;        
     }screenSettings;
@@ -345,37 +346,40 @@ class MainScreen
 {
     
     enum ReadScreens: uint16_t{
-        eReadBegin=1,
-        eTempScreen=eReadBegin,
-        ePhScreen=2,
-        eCarouselScreen=3,
-        eReadEnd
+        eScreenReadBegin=1,
+        eScreenReadTemp=eScreenReadBegin,
+        eScreenReadPh=2,
+        eScreenReadCorousel =3,
+        eScreenReadEnd
     };
     
     uint16_t m_currentBarPosition = 0;
     uint16_t m_maxBarPosition=0;
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
+    bool skip=true;
     char m_readType = 'P';
-    uint16_t m_screenState = ReadScreens::eCarouselScreen;        
+    uint16_t m_screenState = ReadScreens::eScreenReadCorousel;        
 
     public:
  
     void render()
     {
-        if (millis() - m_nextUpdateRead > 1000)
+        if (millis() - m_nextUpdateRead > 500)
         {   
             m_nextUpdateRead = millis();
+
+            //Serial.println(m_screenState);
             switch(m_screenState)
             {
-                case ReadScreens::eTempScreen:
+                case ReadScreens::eScreenReadTemp:
                     screen::showReadings(m_currentBarPosition,"Temp",26.7f);
                     break;
-                case ReadScreens::ePhScreen:
+                case ReadScreens::eScreenReadPh:
                     screen::showReadings(m_currentBarPosition,"Ph",7.5f);
                     break;
-                case ReadScreens::eCarouselScreen:
-                    m_currentBarPosition--; 
+                case ReadScreens::eScreenReadCorousel:
+                    if (skip) { m_currentBarPosition--; skip=false;} else {skip=true;}
                     switch (m_readType)
                     {
                         case 'P':
@@ -404,14 +408,14 @@ class MainScreen
             {
                 case JoyStatus::eLeft:           
                 m_screenState--;
-                if (m_screenState < ReadScreens::eReadBegin) { m_screenState= ReadScreens::eReadEnd;}
+                if (m_screenState < ReadScreens::eScreenReadBegin) { m_screenState = ReadScreens::eScreenReadEnd -1;}
                 break;
                 case JoyStatus::eRight:
                 m_screenState++;
-                if (m_screenState > ReadScreens::eReadEnd) { m_screenState = ReadScreens::eReadBegin;}
+                if (m_screenState >= ReadScreens::eScreenReadEnd) { m_screenState = ReadScreens::eScreenReadBegin;}
                 break;
                 case JoyStatus::eSelect:
-                setNextScreen(ScreenType::eSettingsScreen);
+                setNextScreen(ScreenType::eScreenSettings);
                 break;
             }
         }
@@ -436,7 +440,7 @@ class OptionsScreen
     eSetBegin = 1,
     eSetTempUp = eSetBegin, 
     eSetTempDown = 2, 
-    eSetPhDUp = 3,
+    eSetPhUp = 3,
     eSetPhDown = 4,
     eSetPhTime = 5 ,
     eSetPhPeriod = 6,    
@@ -459,7 +463,7 @@ class OptionsScreen
             case SettingsScreens::eSetTempDown:
             
             break;
-            case SettingsScreens::eSetPhDUp:
+            case SettingsScreens::eSetPhUp:
             
             break;
             case SettingsScreens::eSetPhDown:
@@ -493,17 +497,17 @@ class OptionsScreen
                 case SettingsScreens::eSetTempDown:
                 screen::showSettings(35,20,"Dol temp (C):",1);
                 break;
-                case SettingsScreens::eSetPhDUp:
-                screen::showSettings(0,14,"Gor ph:",1);
+                case SettingsScreens::eSetPhUp:
+                screen::showSettings(14,0,"Gor ph:",1);
                 break;
                 case SettingsScreens::eSetPhDown:
-                screen::showSettings(0,14,"Dol ph:",1);
+                screen::showSettings(14,0,"Dol ph:",1);
                 break;
                 case SettingsScreens::eSetPhTime:
-                screen::showSettings(0,60,"Czas ph (s):",1);
+                screen::showSettings(60,0,"Czas ph (s):",1);
                 break;
                 case SettingsScreens::eSetPhPeriod:
-                screen::showSettings(0,20,"Okres ph (m):",1);
+                screen::showSettings(20,0,"Okres ph (m):",1);
                 break;
             }
     }
@@ -519,11 +523,11 @@ class OptionsScreen
             {
                 case JoyStatus::eLeft:           
                 m_screenState--;
-                if (m_screenState < SettingsScreens::eSetBegin) { m_screenState= SettingsScreens::eSetEnd;}
+                if (m_screenState < SettingsScreens::eSetBegin) { m_screenState= SettingsScreens::eSetEnd -1 ;}
                 break;
                 case JoyStatus::eRight:
                 m_screenState++;
-                if (m_screenState > SettingsScreens::eSetEnd) { m_screenState = SettingsScreens::eSetBegin;}
+                if (m_screenState >= SettingsScreens::eSetEnd) { m_screenState = SettingsScreens::eSetBegin;}
                 break;
                 case JoyStatus::eUp:
                     changeSetting(m_screenState);
@@ -532,8 +536,8 @@ class OptionsScreen
                     changeSetting(m_screenState,false);
                 break;
                 case JoyStatus::eSelect:
-                
-                setNextScreen(ScreenType::eSaveScreen);
+
+                setNextScreen(ScreenType::eScreenSave);
                 break;
             }
         }
@@ -551,17 +555,15 @@ class SaveScreen
     void control(SettingsType settings)
     {
          //EEPROM.put(0, settings);  
-         setNextScreen(ScreenType::eMainScreen);       
+         setNextScreen(ScreenType::eScreenMain);       
     }
 };
 
- 
+
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
 SaveScreen screenSave;
 JoystickType joystick;
-
-
 
 void setup()
 {
@@ -573,27 +575,26 @@ void setup()
 
 void loop()
 { 
-
-    //Serial.println(settings.screenSettings.barLenght);
-    switch(g_currentScreen)
+     switch(g_currentScreen)
     {
-        case eMainScreen:
+        case eScreenMain:
             screenMain.control(joystick.readState());
             screenMain.render();
             break;
  
-        case eSettingsScreen:
+        case eScreenSettings:
             screenOptions.control(joystick.readState());
             screenOptions.render();
             break;
          
-        case eSaveScreen:
+        case eScreenSave:
             screenSave.control(settings);
             screenSave.render();
             break;    
+
     }
 
-    if ( g_currentScreen != eSettingsScreen)
+    if ( g_currentScreen != eScreenSettings)
     {
        control::runLoop();
     }
