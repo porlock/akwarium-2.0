@@ -194,6 +194,15 @@ namespace screen
         display.display(); 
     }
 
+    void showClickOption(const char* text, uint16_t fontSize=1, uint16_t pause=0)
+    {
+        display.clearDisplay();
+        display.setTextSize(fontSize);
+	    display.println(text);
+        display.display(); 
+        delay(pause);  
+    }
+
     void showSave()
     {
         display.clearDisplay();
@@ -201,7 +210,6 @@ namespace screen
 		display.println("Ustawienia");
         display.println("zapisane");   
         display.display();     
-        delay(1500);  
     }
 
 }
@@ -436,6 +444,7 @@ class MainScreen
  
 class OptionsScreen
 {
+    bool displaySettingScreens = true;
     enum SettingsScreens : uint16_t{
     eSetBegin = 1,
     eSetTempUp = eSetBegin, 
@@ -443,13 +452,21 @@ class OptionsScreen
     eSetPhUp = 3,
     eSetPhDown = 4,
     eSetPhTime = 5 ,
-    eSetPhPeriod = 6,    
+    eSetPhPeriod = 6,
+    eSetSave = 7,
+    eSetDefaults = 8,    
     eSetEnd
+    };
+
+    enum SettingsStatusScreens : uint16_t {
+        eOptionsSave,
+        eOptionsDefault        
     };
     
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
-    uint16_t m_screenState = SettingsScreens::eSetTempUp;    
+    uint16_t m_screenState = SettingsScreens::eSetTempUp;
+    uint16_t m_screenStatusState;
     SettingsType *settingsPointer;
     
 
@@ -485,31 +502,48 @@ class OptionsScreen
         settingsPointer = &_settings;        
     }
     
-
-
     void render()
-    {    
+    {
+        Serial.println(displaySettingScreens);    
+        if (displaySettingScreens){
             switch(m_screenState)
             {
                 case SettingsScreens::eSetTempUp:
-                screen::showSettings(20,35,"Gor temp (C):",settingsPointer->tempSettings.up);
-                break;
+                    screen::showSettings(20,35,"Gor temp (C):",settingsPointer->tempSettings.up);
+                    break;
                 case SettingsScreens::eSetTempDown:
-                screen::showSettings(20,35,"Dol temp (C):",1);
-                break;
+                    screen::showSettings(20,35,"Dol temp (C):",1);
+                    break;
                 case SettingsScreens::eSetPhUp:
-                screen::showSettings(0,14,"Gor ph:",1);
-                break;
+                    screen::showSettings(0,14,"Gor ph:",1);
+                    break;
                 case SettingsScreens::eSetPhDown:
-                screen::showSettings(0,14,"Dol ph:",1);
-                break;
+                    screen::showSettings(0,14,"Dol ph:",1);
+                    break;
                 case SettingsScreens::eSetPhTime:
-                screen::showSettings(0,60,"Czas ph (s):",1);
-                break;
+                    screen::showSettings(0,60,"Czas ph (s):",1);
+                    break;
                 case SettingsScreens::eSetPhPeriod:
-                screen::showSettings(0,20,"Okres ph (m):",1);
-                break;
+                    screen::showSettings(0,20,"Okres ph (m):",1);
+                    break;
+                case SettingsScreens::eSetSave:
+                    screen::showClickOption("Zapisz ustawienia");
+                    break;
+                case SettingsScreens::eSetDefaults:
+                    screen::showClickOption("Reset ustawien");
+                    break;    
             }
+        }
+        else {
+                 switch(m_screenStatusState){
+                     case SettingsStatusScreens::eOptionsSave:
+                        screen::showClickOption("Zapisane",1,1500);
+                     break;
+                     case SettingsStatusScreens::eOptionsDefault:
+                        screen::showClickOption("Przywrócono",1,1500);
+                }
+            displaySettingScreens=true;
+        }
     }
 
  
@@ -522,22 +556,41 @@ class OptionsScreen
             switch (joyState)
             {
                 case JoyStatus::eLeft:           
-                m_screenState--;
-                if (m_screenState < SettingsScreens::eSetBegin) { m_screenState= SettingsScreens::eSetEnd -1 ;}
-                break;
+                    m_screenState--;
+                    if (m_screenState < SettingsScreens::eSetBegin) { m_screenState= SettingsScreens::eSetEnd -1 ;}
+                    break;
                 case JoyStatus::eRight:
-                m_screenState++;
-                if (m_screenState >= SettingsScreens::eSetEnd) { m_screenState = SettingsScreens::eSetBegin;}
-                break;
+                    m_screenState++;
+                    if (m_screenState >= SettingsScreens::eSetEnd) { m_screenState = SettingsScreens::eSetBegin;}
+                    break;
                 case JoyStatus::eUp:
                     changeSetting(m_screenState);
-                break;
+                    break;
                 case JoyStatus::eDown:
                     changeSetting(m_screenState,false);
-                break;
+                    break;
                 case JoyStatus::eSelect:
-
-                setNextScreen(ScreenType::eScreenSave);
+                    Serial.println("select");
+                    switch (m_screenState)
+                    {
+                        case OptionsScreen::eSetSave:
+                            Serial.println("eSetSave");
+                            m_screenStatusState = SettingsStatusScreens::eOptionsSave;
+                            m_screenState=SettingsScreens::eSetBegin;
+                            //tu zapis ustawień
+                            displaySettingScreens=false;
+                            
+                            break;
+                        case OptionsScreen::eSetDefaults:
+                            m_screenStatusState = SettingsStatusScreens::eOptionsDefault;
+                            m_screenState=SettingsScreens::eSetBegin;
+                            //tu reset ustawień
+                            displaySettingScreens=false;
+                            break;
+                        default:
+                            setNextScreen(ScreenType::eScreenMain);
+                            break;
+                    }
                 break;
             }
         }
@@ -570,6 +623,7 @@ void setup()
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
+    Serial.println("Program Start");
     //EEPROM.get( 0, settings);
 }
 
@@ -587,11 +641,11 @@ void loop()
             screenOptions.render();
             break;
          
-        case eScreenSave:
+       /* case eScreenSave:
             screenSave.control(settings);
             screenSave.render();
             break;    
-
+        */
     }
 
     if ( g_currentScreen != eScreenSettings)
