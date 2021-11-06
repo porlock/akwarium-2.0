@@ -4,6 +4,17 @@
 #include <Adafruit_PCD8544.h>
 #include <EEPROM.h>
 
+
+enum Pins : uint16_t{
+    eDigitalPinSoundOut=6,
+    eDigitalPinTempIn=4,
+    eDigitalPinJoySelect=12,
+    eAnalogPinJoyX=0,
+    eAnalogPinJoyY=1
+};
+
+
+/*
 #define DPIND_SOUNDOUT 6
 #define DPIN_TEMPIN 4
 #define DPIN_SELECT 12
@@ -13,31 +24,28 @@
 #define DPIN_KOUT 2
 #define DPIN_ZOUT 5
 #define HEAT 3
+*/
 
-#define SCREEN_READ_TEMP_1 1
-#define SCREEN_READ_PH_2 2
-#define SCREEN_READ_3 3
 
-#define SCREEN_SET_UP_TEMP 1
-#define SCREEN_SET_DOWN_TEMP 2
-#define SCREEN_SET_UP_PH 3
-#define SCREEN_SET_DOWN_PH 4
-#define SCREEN_SET_TIME_PH 5
-#define SCREEN_SET_PERIOD_PH 6
-
-#define SCREEN_PH_CALLIBRATION_5 10
-#define SCREEN_OPTIONS_6 11
-
+enum JoyStatus
+{
+    eUp,
+    eDown,
+    eLeft,
+    eRight,
+    eCenter,
+    eSelect
+};
 
 enum ScreenType
 {
-    ST_Main,
-    ST_Options,
-    ST_Save,
+    eScreenMain,
+    eScreenSettings,
+    eScreenSave,
 };
 
-ScreenType g_currentScreen = ST_Main;
-ScreenType g_nextScreen = ST_Main;
+ScreenType g_currentScreen = eScreenMain;
+ScreenType g_nextScreen = eScreenMain;
 
 void setNextScreen(ScreenType screen)
 {
@@ -58,14 +66,15 @@ namespace hciRelay
 
 namespace screen
 {
+
     Adafruit_PCD8544 display = Adafruit_PCD8544(11, 10, 9, 8);
 
 
-    struct iconsIndicators{
+    struct IconsIndicatorsType{
         bool refill;
         bool hci;
         bool heater;
-    };
+    } iconsIndicator {0,0,0};
 
        constexpr byte fish[] PROGMEM = {
 		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
@@ -136,7 +145,7 @@ namespace screen
         clearScreen();   
     }
 
-    void showReadings(int bottomBarLenght, const char* name, float value, iconsIndicators iconsIndicator, bool showRefreshIcon=0)
+    void showReadings(uint16_t bottomBarLenght, const char* name, float value, bool showRefreshIcon=false)
     {
         display.clearDisplay();
         display.setTextColor(BLACK);
@@ -162,7 +171,7 @@ namespace screen
 	        display.drawBitmap(73,6,refresh,16,8, BLACK);
 
             display.setTextSize(1);
-            for (int i = 0; i < bottomBarLenght; i++)
+            for (uint16_t i = 0; i < bottomBarLenght; i++)
 	        {
                 display.print('_');
             }
@@ -172,13 +181,13 @@ namespace screen
     }
 
 
-    void showSettings(int max, int min, const char* name, float value)
+    void showSettings(uint16_t minValue, uint16_t maxValue, const char* name, float value)
     {
         display.clearDisplay();
         display.setTextSize(1);
 	    display.println("USTAWIENIA");
   	    display.println(name);
-		display.print("od "); display.print(min); display.print(" do "); display.println(max);
+		display.print("od "); display.print(maxValue); display.print(" do "); display.println(minValue);
         display.println();
 		display.setTextSize(2);
 		display.println(value);   
@@ -196,36 +205,37 @@ namespace screen
     }
 
 }
-class joystickType
+class JoystickType
 {
     private:
-        int horizontal, vertical, select;
-        char status = 'c';
-        char prevStatus = 'c';
+        uint16_t horizontal, vertical, select;
+        JoyStatus status = JoyStatus::eCenter;
+        JoyStatus prevStatus = JoyStatus::eCenter;
         void readPins()
         {
-            horizontal = analogRead(APIN_JOY_X);
-	        vertical = analogRead(APIN_JOY_Y);
-            select = digitalRead(DPIN_SELECT);            
+            horizontal = analogRead(Pins::eAnalogPinJoyX);
+	        vertical = analogRead(Pins::eAnalogPinJoyY);
+            select = digitalRead(Pins::eDigitalPinJoySelect);            
         }
         void beep(){
-            for (unsigned long go = millis(); millis() - go < 100; analogWrite(DPIND_SOUNDOUT, 50));
-            digitalWrite(DPIND_SOUNDOUT, LOW);
+            analogWrite(Pins::eDigitalPinSoundOut, 50);
+            delay(100);
+            digitalWrite(Pins::eDigitalPinSoundOut, LOW);
         }
    
     public:
-        char readState()
+        JoyStatus readState()
         {
             readPins();
-            if (!select) {status = 'p'; }
-            else if (horizontal >700 ) {status = 'l'; }
-            else if (horizontal <300) {status = 'r'; }
-            else if (vertical > 700) {status = 'd';}
-            else if (vertical < 300) {status = 'u';}
-            else {status = 'c';}
+            if (!select) {status = JoyStatus::eSelect; }
+            else if (horizontal >700 ) {status = JoyStatus::eLeft; }
+            else if (horizontal <300) {status = JoyStatus::eRight; }
+            else if (vertical > 700) {status = JoyStatus::eDown;}
+            else if (vertical < 300) {status = JoyStatus::eUp;}
+            else {status = JoyStatus::eCenter;}
           
             if (status == prevStatus){
-                return 'c';                
+                return JoyStatus::eCenter;                
             }
             prevStatus=status;            
             beep();
@@ -234,176 +244,235 @@ class joystickType
     
 };
 
+
 namespace probing{
 
-    double readPH()
+    struct ReadingsType{
+        float ph;
+        float temp;
+        bool waterLevel;
+    } readings{7,25,false};
+
+    float readPH()
     {
         
     }
 
-    double readTemp()
+    float readTemp()
     {
         
     }
 
-    double readWaterLevel()
+    float readWaterLevel()
     {
         return true;
+    }
+
+    void runProbbingLoop()
+    {
+
     }
 }
 
 namespace control{
+
+    uint32_t nextUpdateProbe = 0;
     
-    void ph(double ph){
+    void ph(float ph){
 
     }
 
-    void refill(bool waterLevel, screen::iconsIndicators* iconsIndicator )
+    void refill(bool waterLevel)
     {
+        //iconsIndicator->refill = waterLevel;
+        screen::iconsIndicator.refill = waterLevel;
         if (waterLevel){
-             int i=1;
-             iconsIndicator->refill=true;
+             uint16_t i=1;
         }
         else {
-            int i=0;
-            iconsIndicator->refill=false;
+            uint16_t i=0;
+        }
+    }
+
+    void runLoop()
+    {
+        if (millis() - nextUpdateProbe > 500)
+        {
+            nextUpdateProbe = millis();      
+            float temperature = probing::readTemp();
+            float ph = probing::readPH();
+            refill(probing::readWaterLevel());            
         }
     }
 }
 
-struct settingsType
+struct SettingsType
 {
-    struct phSettingsType
+    struct PhSettingsType
     {
         float up;
         float down;
-        float interval;
-        float onTime;
-    } phSettings{6.7, 6.5, 300, 3};
+        uint16_t interval;
+        uint16_t onTime;
+    }phSettings;
 
-    struct temptSettingsType
+    struct TempSettingsType
     {
         float up;
         float down;
-    }tempSettings{27,25.5};
+    }tempSettings;
 
-    struct phCalibrationSettingsType
+    struct PhCalibrationSettingsType
     {
         float ph7V;
         float ph4V;
         float phFactor;
-    }phCalibrationSettings {0,0,0};
+    }phCalibrationSettings;
 
-    struct screenSettingsType
+    struct ScreenSettingsType
     {
-        int barLenght;        
-    } screenSettings{13};
+        uint16_t barLenght;        
+    }screenSettings;
 
-}settings;
+}settings = {
+    {6.7f, 6.5f, 300, 3},
+    {27.0f,25.5f},
+    {0.00f,0.00f,0.00f},
+    {15}
+};
 
 
 class MainScreen
 {
-    int m_currentBarPozition = settings.screenSettings.barLenght;
+    
+    enum ReadScreens: uint16_t{
+        eScreenReadBegin=1,
+        eScreenReadTemp=eScreenReadBegin,
+        eScreenReadPh=2,
+        eScreenReadCorousel =3,
+        eScreenReadEnd
+    };
+    
+    uint16_t m_currentBarPosition = 0;
+    uint16_t m_maxBarPosition=0;
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
+    bool skip=true;
     char m_readType = 'P';
-    int m_screenState = SCREEN_READ_3;        
- 
-    
+    uint16_t m_screenState = ReadScreens::eScreenReadCorousel;        
 
     public:
  
-    void render( screen::iconsIndicators iconsIndicator)
+    void render()
     {
-        if (millis() - m_nextUpdateRead > 1000)
+        if (millis() - m_nextUpdateRead > 500)
         {   
             m_nextUpdateRead = millis();
+
+            //Serial.println(m_screenState);
             switch(m_screenState)
             {
-                case SCREEN_READ_TEMP_1:
-                    screen::showReadings(m_currentBarPozition,"Temp",26.7, iconsIndicator );
+                case ReadScreens::eScreenReadTemp:
+                    screen::showReadings(m_currentBarPosition,"Temp",26.7f);
                     break;
-                case SCREEN_READ_PH_2:
-                    screen::showReadings(m_currentBarPozition,"Ph",7.5, iconsIndicator);
+                case ReadScreens::eScreenReadPh:
+                    screen::showReadings(m_currentBarPosition,"Ph",7.5f);
                     break;
-                case SCREEN_READ_3:
-                    m_currentBarPozition--; 
+                case ReadScreens::eScreenReadCorousel:
+                    if (skip) { m_currentBarPosition--; skip=false;} else {skip=true;}
                     switch (m_readType)
                     {
                         case 'P':
-                            screen::showReadings(m_currentBarPozition,"Ph",m_currentBarPozition, iconsIndicator, true);
+                            screen::showReadings(m_currentBarPosition,"Ph",m_currentBarPosition, true);
                             break;
                         case 'T':
-                            screen::showReadings(m_currentBarPozition,"Temp",m_currentBarPozition,iconsIndicator, true);        
+                            screen::showReadings(m_currentBarPosition,"Temp",m_currentBarPosition, true);        
                             break;
-                    }
-            
-                    if  (m_currentBarPozition==0) {
-                        m_currentBarPozition=settings.screenSettings.barLenght;
-                        if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
+                    }                
+                    //Serial.println(m_currentBarPosition);                        
+                    if  (m_currentBarPosition==0) {                             
+                        m_currentBarPosition=m_maxBarPosition;
+                            if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
                         }
                     break;
             }
- 
         }  
     }
  
-    void control(char joyState)
+    void control(JoyStatus joyState)
     {
         if (millis() - m_nextUpdateJoystick > 100)
         {
             m_nextUpdateJoystick = millis();       
             switch (joyState)
             {
-                case 'l':           
+                case JoyStatus::eLeft:           
                 m_screenState--;
-                if (m_screenState < SCREEN_READ_TEMP_1) { m_screenState= SCREEN_READ_3;}
+                if (m_screenState < ReadScreens::eScreenReadBegin) { m_screenState = ReadScreens::eScreenReadEnd -1;}
                 break;
-                case 'r':
+                case JoyStatus::eRight:
                 m_screenState++;
-                if (m_screenState > SCREEN_READ_3) { m_screenState = SCREEN_READ_TEMP_1;}
+                if (m_screenState >= ReadScreens::eScreenReadEnd) { m_screenState = ReadScreens::eScreenReadBegin;}
                 break;
-                case 'p':
-                setNextScreen(ScreenType::ST_Options);
+                case JoyStatus::eSelect:
+                setNextScreen(ScreenType::eScreenSettings);
                 break;
             }
         }
     }
+
+
+    const SettingsType &m_settings;
+    
+    MainScreen(const SettingsType& _settings) : m_settings(_settings)
+    {
+        m_currentBarPosition = m_settings.screenSettings.barLenght;
+        m_maxBarPosition = m_currentBarPosition;
+    }
+
+
 };
  
  
 class OptionsScreen
 {
-
-    int m_currentBarPozition = settings->screenSettings.barLenght;
+    enum SettingsScreens : uint16_t{
+    eSetBegin = 1,
+    eSetTempUp = eSetBegin, 
+    eSetTempDown = 2, 
+    eSetPhUp = 3,
+    eSetPhDown = 4,
+    eSetPhTime = 5 ,
+    eSetPhPeriod = 6,    
+    eSetEnd
+    };
     
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
-    int m_screenState = SCREEN_SET_UP_TEMP;    
-    settingsType *settings;
+    uint16_t m_screenState = SettingsScreens::eSetTempUp;    
+    SettingsType *settingsPointer;
     
 
-    void changeSetting (int screenState,bool add=true, double grade=0.1)
+    void changeSetting (uint16_t screenState,bool add=true, float grade=0.1f)
     {   
         switch(screenState)
         {
-            case SCREEN_SET_UP_TEMP:
-                if (add){settings->tempSettings.up=settings->tempSettings.up+grade;} else {settings->tempSettings.up=settings->tempSettings.up-grade;}
+            case SettingsScreens::eSetTempUp:
+                if (add){settingsPointer->tempSettings.up+=grade;} else {settingsPointer->tempSettings.up-=grade;}
             break;
-            case SCREEN_SET_DOWN_TEMP:
+            case SettingsScreens::eSetTempDown:
             
             break;
-            case SCREEN_SET_UP_PH:
+            case SettingsScreens::eSetPhUp:
             
             break;
-            case SCREEN_SET_DOWN_PH:
+            case SettingsScreens::eSetPhDown:
             
             break;
-            case SCREEN_SET_TIME_PH:
+            case SettingsScreens::eSetPhTime:
             
             break;
-            case SCREEN_SET_PERIOD_PH:
+            case SettingsScreens::eSetPhPeriod:
             
             break;
         }
@@ -411,9 +480,9 @@ class OptionsScreen
 
     public:
     
-    OptionsScreen(settingsType& _settings)
+    OptionsScreen(SettingsType& _settings)
     {
-        settings = &_settings;        
+        settingsPointer = &_settings;        
     }
     
 
@@ -422,29 +491,29 @@ class OptionsScreen
     {    
             switch(m_screenState)
             {
-                case SCREEN_SET_UP_TEMP:
-                screen::showSettings(35,20,"Gor temp (C):",settings->tempSettings.up);
+                case SettingsScreens::eSetTempUp:
+                screen::showSettings(35,20,"Gor temp (C):",settingsPointer->tempSettings.up);
                 break;
-                case SCREEN_SET_DOWN_TEMP:
+                case SettingsScreens::eSetTempDown:
                 screen::showSettings(35,20,"Dol temp (C):",1);
                 break;
-                case SCREEN_SET_UP_PH:
-                screen::showSettings(0,14,"Gor ph:",1);
+                case SettingsScreens::eSetPhUp:
+                screen::showSettings(14,0,"Gor ph:",1);
                 break;
-                case SCREEN_SET_DOWN_PH:
-                screen::showSettings(0,14,"Dol ph:",1);
+                case SettingsScreens::eSetPhDown:
+                screen::showSettings(14,0,"Dol ph:",1);
                 break;
-                case SCREEN_SET_TIME_PH:
-                screen::showSettings(0,60,"Czas ph (s):",1);
+                case SettingsScreens::eSetPhTime:
+                screen::showSettings(60,0,"Czas ph (s):",1);
                 break;
-                case SCREEN_SET_PERIOD_PH:
-                screen::showSettings(0,20,"Okres ph (m):",1);
+                case SettingsScreens::eSetPhPeriod:
+                screen::showSettings(20,0,"Okres ph (m):",1);
                 break;
             }
     }
 
  
-    void control(char joyState)
+    void control(JoyStatus joyState)
     {
         if (millis() - m_nextUpdateJoystick > 100)
         {
@@ -452,22 +521,23 @@ class OptionsScreen
             m_nextUpdateJoystick = millis();       
             switch (joyState)
             {
-                case 'l':           
+                case JoyStatus::eLeft:           
                 m_screenState--;
-                if (m_screenState < SCREEN_SET_UP_TEMP) { m_screenState= SCREEN_SET_PERIOD_PH;}
+                if (m_screenState < SettingsScreens::eSetBegin) { m_screenState= SettingsScreens::eSetEnd -1 ;}
                 break;
-                case 'r':
+                case JoyStatus::eRight:
                 m_screenState++;
-                if (m_screenState > SCREEN_SET_PERIOD_PH) { m_screenState = SCREEN_SET_UP_TEMP;}
+                if (m_screenState >= SettingsScreens::eSetEnd) { m_screenState = SettingsScreens::eSetBegin;}
                 break;
-                case 'u':
+                case JoyStatus::eUp:
                     changeSetting(m_screenState);
                 break;
-                case 'd':
+                case JoyStatus::eDown:
                     changeSetting(m_screenState,false);
                 break;
-                case 'p':
-                setNextScreen(ScreenType::ST_Save);
+                case JoyStatus::eSelect:
+
+                setNextScreen(ScreenType::eScreenSave);
                 break;
             }
         }
@@ -482,61 +552,51 @@ class SaveScreen
         screen::showSave();
     }
 
-    void control(settingsType settings)
+    void control(SettingsType settings)
     {
-         EEPROM.put(0, settings);  
-         setNextScreen(ScreenType::ST_Main);       
+         //EEPROM.put(0, settings);  
+         setNextScreen(ScreenType::eScreenMain);       
     }
 };
 
- 
-MainScreen screenMain;
-OptionsScreen screenOptions (settings);
-SaveScreen screenSave;
-joystickType joystick;
-screen::iconsIndicators iconsIndicator;
-uint32_t nextUpdateProbe = 0;
 
+MainScreen screenMain(settings);
+OptionsScreen screenOptions(settings);
+SaveScreen screenSave;
+JoystickType joystick;
 
 void setup()
 {
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
-    EEPROM.get( 0, settings);
+    //EEPROM.get( 0, settings);
 }
 
 void loop()
 { 
-
-    switch(g_currentScreen)
+     switch(g_currentScreen)
     {
-        case ST_Main:
+        case eScreenMain:
             screenMain.control(joystick.readState());
-            screenMain.render(iconsIndicator);
+            screenMain.render();
             break;
  
-        case ST_Options:
+        case eScreenSettings:
             screenOptions.control(joystick.readState());
             screenOptions.render();
             break;
          
-        case ST_Save:
+        case eScreenSave:
             screenSave.control(settings);
             screenSave.render();
             break;    
+
     }
 
-    if ( g_currentScreen != ST_Options)
+    if ( g_currentScreen != eScreenSettings)
     {
-        if (millis() - nextUpdateProbe > 500)
-        {
-            nextUpdateProbe = millis();      
-            double temperature = probing::readTemp();
-            double ph = probing::readPH();
-            control::refill(probing::readWaterLevel(), &iconsIndicator);
-            Serial.println(settings.tempSettings.up);
-        }
+       control::runLoop();
     }
 
     if (g_currentScreen != g_nextScreen)
