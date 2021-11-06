@@ -187,7 +187,7 @@ namespace screen
         display.setTextSize(1);
 	    display.println("USTAWIENIA");
   	    display.println(name);
-		display.print("od "); display.print(maxValue); display.print(" do "); display.println(minValue);
+		display.print("od "); display.print(minValue); display.print(" do "); display.println(maxValue);
         display.println();
 		display.setTextSize(2);
 		display.println(value);   
@@ -492,22 +492,22 @@ class OptionsScreen
             switch(m_screenState)
             {
                 case SettingsScreens::eSetTempUp:
-                screen::showSettings(35,20,"Gor temp (C):",settingsPointer->tempSettings.up);
+                screen::showSettings(20,35,"Gor temp (C):",settingsPointer->tempSettings.up);
                 break;
                 case SettingsScreens::eSetTempDown:
-                screen::showSettings(35,20,"Dol temp (C):",1);
+                screen::showSettings(20,35,"Dol temp (C):",1);
                 break;
                 case SettingsScreens::eSetPhUp:
-                screen::showSettings(14,0,"Gor ph:",1);
+                screen::showSettings(0,14,"Gor ph:",1);
                 break;
                 case SettingsScreens::eSetPhDown:
-                screen::showSettings(14,0,"Dol ph:",1);
+                screen::showSettings(0,14,"Dol ph:",1);
                 break;
                 case SettingsScreens::eSetPhTime:
-                screen::showSettings(60,0,"Czas ph (s):",1);
+                screen::showSettings(0,60,"Czas ph (s):",1);
                 break;
                 case SettingsScreens::eSetPhPeriod:
-                screen::showSettings(20,0,"Okres ph (m):",1);
+                screen::showSettings(0,20,"Okres ph (m):",1);
                 break;
             }
     }
