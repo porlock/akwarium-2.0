@@ -3,10 +3,12 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include <EEPROM.h>
+#include "FixedPoint.h"
+
 
 
 enum Pins : uint16_t{
-    eDigitalPinSoundOut=6,
+    eDigitalPinSoundOut=6, 
     eDigitalPinTempIn=4,
     eDigitalPinJoySelect=12,
     eAnalogPinJoyX=0,
@@ -145,7 +147,7 @@ namespace screen
         clearScreen();   
     }
 
-    void showReadings(uint16_t bottomBarLenght, const char* name, float value, bool showRefreshIcon=false)
+    void showReadings(uint16_t bottomBarLenght, const char* name, Fixed2 value, bool showRefreshIcon=false)
     {
         display.clearDisplay();
         display.setTextColor(BLACK);
@@ -158,12 +160,11 @@ namespace screen
         display.setCursor(0,0);
         display.print(name); display.println(':');
     
-
+        
         display.println();
         display.setTextSize(3);
-
-        if (value >=10) display.println(value,1);
-        else display.println(value,2);
+        if (value >=10) display.println(value.asFloat(),1);
+        else display.println(value.asFloat(),2);
 
         if (showRefreshIcon)
 	  	{
@@ -181,7 +182,7 @@ namespace screen
     }
 
 
-    void showSettings(uint16_t minValue, uint16_t maxValue, const char* name, float value)
+    void showSettings(uint16_t minValue, uint16_t maxValue, const char* name, Fixed2 value)
     {
         display.clearDisplay();
         display.setTextSize(1);
@@ -190,7 +191,7 @@ namespace screen
 		display.print("od "); display.print(minValue); display.print(" do "); display.println(maxValue);
         display.println();
 		display.setTextSize(2);
-		display.println(value);   
+		display.println(value.asFloat());   
         display.display(); 
     }
 
@@ -256,22 +257,22 @@ class JoystickType
 namespace probing{
 
     struct ReadingsType{
-        float ph;
-        float temp;
+        Fixed2 ph;
+        Fixed2 temp;
         bool waterLevel;
     } readings{7,25,false};
 
-    float readPH()
+    Fixed2 readPH()
     {
         
     }
 
-    float readTemp()
+    Fixed2 readTemp()
     {
         
     }
 
-    float readWaterLevel()
+    bool readWaterLevel()
     {
         return true;
     }
@@ -286,7 +287,7 @@ namespace control{
 
     uint32_t nextUpdateProbe = 0;
     
-    void ph(float ph){
+    void ph(Fixed2 ph){
 
     }
 
@@ -307,8 +308,8 @@ namespace control{
         if (millis() - nextUpdateProbe > 500)
         {
             nextUpdateProbe = millis();      
-            float temperature = probing::readTemp();
-            float ph = probing::readPH();
+            Fixed2 temperature = probing::readTemp();
+            Fixed2 ph = probing::readPH();
             refill(probing::readWaterLevel());            
         }
     }
@@ -318,23 +319,23 @@ struct SettingsType
 {
     struct PhSettingsType
     {
-        float up = 6.8f;
-        float down = 6.5f;
+        Fixed2 up = 6.8f;
+        Fixed2 down = 6.5f;
         uint16_t interval = 10;
         uint16_t onTime = 2;
     }phSettings;
 
     struct TempSettingsType
     {
-        float up = 27.0f;
-        float down = 25.5f;
+        Fixed2 up = 27.0f;
+        Fixed2 down = 25.5f;
     }tempSettings;
 
     struct PhCalibrationSettingsType
     {
-        float ph7V=0;
-        float ph4V=0;
-        float phFactor=0;
+        Fixed2 ph7V=0;
+        Fixed2 ph4V=0;
+        Fixed2 phFactor=0;
     }phCalibrationSettings;
 
     struct ScreenSettingsType
@@ -380,10 +381,10 @@ class MainScreen
             switch(m_screenState)
             {
                 case ReadScreens::eScreenReadTemp:
-                    screen::showReadings(m_currentBarPosition,"Temp",26.7f);
+                    screen::showReadings(m_currentBarPosition,"Temp",27.5);
                     break;
                 case ReadScreens::eScreenReadPh:
-                    screen::showReadings(m_currentBarPosition,"Ph",7.5f);
+                    screen::showReadings(m_currentBarPosition,"Ph",7.5);
                     break;
                 case ReadScreens::eScreenReadCorousel:
                     if (skip) { m_currentBarPosition--; skip=false;} else {skip=true;}
@@ -475,8 +476,8 @@ class OptionsScreen
     SettingsType *settingsPointer;
     
     struct {
-        float phGrade = 0.1f;
-        float tempGrade = 0.5f;
+        Fixed2 phGrade = 0.1f;
+        Fixed2 tempGrade = 0.5f;
         uint16_t timeGrade = 1;
         uint16_t intevalGrade = 1;
     } settingsGrades;
@@ -485,7 +486,7 @@ class OptionsScreen
         uint16_t phMax = 8;
         uint16_t phMin = 6;
         uint16_t tempMin = 20;
-        uint16_t tempMax = 35;
+        uint16_t tempMax= 35;
         uint16_t phIntervalMax = 60;
         uint16_t phIntervalMin = 1;
         uint16_t phTimeMax = 30;
@@ -549,7 +550,7 @@ class OptionsScreen
             switch(m_screenState)
             {
                 case SettingsScreens::eSetTempUp:
-                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Gor temp (C):",(char)settingsPointer->tempSettings.up);
+                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Gor temp (C):",settingsPointer->tempSettings.up);
                     break;
                 case SettingsScreens::eSetTempDown:
                     screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Dol temp (C):",settingsPointer->tempSettings.down);
@@ -615,7 +616,7 @@ class OptionsScreen
                         case OptionsScreen::eSetSave:
                             m_screenStatusState = SettingsStatusScreens::eOptionsSave;
                             m_screenState=SettingsScreens::eSetBegin;
-                            //tu zapis ustawień
+                            EEPROM.put( 0, settings);
                             displaySettingScreens=false;
                             break;
                         case OptionsScreen::eSetDefaults:
@@ -645,7 +646,7 @@ void setup()
     screen::showLogo();
     Serial.begin(9600);
     Serial.println("Program Start");
-    //EEPROM.get( 0, settings);
+    EEPROM.get( 0, settings);
 }
 
 void loop()
