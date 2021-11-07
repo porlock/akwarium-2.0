@@ -3,10 +3,12 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include <EEPROM.h>
+#include "FixedPoint.h"
+
 
 
 enum Pins : uint16_t{
-    eDigitalPinSoundOut=6,
+    eDigitalPinSoundOut=6, 
     eDigitalPinTempIn=4,
     eDigitalPinJoySelect=12,
     eAnalogPinJoyX=0,
@@ -41,7 +43,7 @@ enum ScreenType
 {
     eScreenMain,
     eScreenSettings,
-    eScreenSave,
+    eScreenPhCalibraton,
 };
 
 ScreenType g_currentScreen = eScreenMain;
@@ -145,7 +147,7 @@ namespace screen
         clearScreen();   
     }
 
-    void showReadings(uint16_t bottomBarLenght, const char* name, float value, bool showRefreshIcon=false)
+    void showReadings(uint16_t bottomBarLenght, const char* name, Fixed2 value, bool showRefreshIcon=false)
     {
         display.clearDisplay();
         display.setTextColor(BLACK);
@@ -158,12 +160,11 @@ namespace screen
         display.setCursor(0,0);
         display.print(name); display.println(':');
     
-
+        
         display.println();
         display.setTextSize(3);
-
-        if (value >=10) display.println(value,1);
-        else display.println(value,2);
+        if (value >=10) display.println(value.asFloat(),1);
+        else display.println(value.asFloat(),2);
 
         if (showRefreshIcon)
 	  	{
@@ -181,7 +182,7 @@ namespace screen
     }
 
 
-    void showSettings(uint16_t minValue, uint16_t maxValue, const char* name, float value)
+    void showSettings(uint16_t minValue, uint16_t maxValue, const char* name, Fixed2 value)
     {
         display.clearDisplay();
         display.setTextSize(1);
@@ -190,8 +191,17 @@ namespace screen
 		display.print("od "); display.print(minValue); display.print(" do "); display.println(maxValue);
         display.println();
 		display.setTextSize(2);
-		display.println(value);   
+		display.println(value.asFloat());   
         display.display(); 
+    }
+
+    void showClickOption(const char* text, uint16_t fontSize=1, uint16_t pause=0)
+    {
+        display.clearDisplay();
+        display.setTextSize(fontSize);
+	    display.println(text);
+        display.display(); 
+        delay(pause);  
     }
 
     void showSave()
@@ -201,7 +211,6 @@ namespace screen
 		display.println("Ustawienia");
         display.println("zapisane");   
         display.display();     
-        delay(1500);  
     }
 
 }
@@ -211,8 +220,7 @@ class JoystickType
         uint16_t horizontal, vertical, select;
         JoyStatus status = JoyStatus::eCenter;
         JoyStatus prevStatus = JoyStatus::eCenter;
-        void readPins()
-        {
+        void readPins(){
             horizontal = analogRead(Pins::eAnalogPinJoyX);
 	        vertical = analogRead(Pins::eAnalogPinJoyY);
             select = digitalRead(Pins::eDigitalPinJoySelect);            
@@ -248,22 +256,22 @@ class JoystickType
 namespace probing{
 
     struct ReadingsType{
-        float ph;
-        float temp;
+        Fixed2 ph;
+        Fixed2 temp;
         bool waterLevel;
     } readings{7,25,false};
 
-    float readPH()
+    Fixed2 readPH()
     {
         
     }
 
-    float readTemp()
+    Fixed2 readTemp()
     {
         
     }
 
-    float readWaterLevel()
+    bool readWaterLevel()
     {
         return true;
     }
@@ -278,7 +286,7 @@ namespace control{
 
     uint32_t nextUpdateProbe = 0;
     
-    void ph(float ph){
+    void ph(Fixed2 ph){
 
     }
 
@@ -299,8 +307,8 @@ namespace control{
         if (millis() - nextUpdateProbe > 500)
         {
             nextUpdateProbe = millis();      
-            float temperature = probing::readTemp();
-            float ph = probing::readPH();
+            Fixed2 temperature = probing::readTemp();
+            Fixed2 ph = probing::readPH();
             refill(probing::readWaterLevel());            
         }
     }
@@ -310,36 +318,36 @@ struct SettingsType
 {
     struct PhSettingsType
     {
-        float up;
-        float down;
-        uint16_t interval;
-        uint16_t onTime;
+        Fixed2 up = 6.8f;
+        Fixed2 down = 6.5f;
+        uint16_t interval = 10;
+        uint16_t onTime = 2;
     }phSettings;
 
     struct TempSettingsType
     {
-        float up;
-        float down;
+        Fixed2 up = 27.0f;
+        Fixed2 down = 25.5f;
     }tempSettings;
 
     struct PhCalibrationSettingsType
     {
-        float ph7V;
-        float ph4V;
-        float phFactor;
+        Fixed2 ph7V=0;
+        Fixed2 ph4V=0;
+        Fixed2 phFactor=0;
     }phCalibrationSettings;
 
     struct ScreenSettingsType
     {
-        uint16_t barLenght;        
+        uint16_t barLenght=13;        
     }screenSettings;
 
-}settings = {
+}settings /*= {
     {6.7f, 6.5f, 300, 3},
     {27.0f,25.5f},
     {0.00f,0.00f,0.00f},
     {15}
-};
+}*/;
 
 
 class MainScreen
@@ -369,14 +377,13 @@ class MainScreen
         {   
             m_nextUpdateRead = millis();
 
-            //Serial.println(m_screenState);
             switch(m_screenState)
             {
                 case ReadScreens::eScreenReadTemp:
-                    screen::showReadings(m_currentBarPosition,"Temp",26.7f);
+                    screen::showReadings(m_currentBarPosition,"Temp",27.5);
                     break;
                 case ReadScreens::eScreenReadPh:
-                    screen::showReadings(m_currentBarPosition,"Ph",7.5f);
+                    screen::showReadings(m_currentBarPosition,"Ph",7.5);
                     break;
                 case ReadScreens::eScreenReadCorousel:
                     if (skip) { m_currentBarPosition--; skip=false;} else {skip=true;}
@@ -389,7 +396,6 @@ class MainScreen
                             screen::showReadings(m_currentBarPosition,"Temp",m_currentBarPosition, true);        
                             break;
                     }                
-                    //Serial.println(m_currentBarPosition);                        
                     if  (m_currentBarPosition==0) {                             
                         m_currentBarPosition=m_maxBarPosition;
                             if (m_readType == 'T') {m_readType = 'P';} else {m_readType = 'T';}
@@ -421,9 +427,14 @@ class MainScreen
         }
     }
 
-
+    // m_settings jest referencja typu SettingsType
     const SettingsType &m_settings;
-    
+
+    /* 
+    m_settings(_settings)
+    to jest lista inicjalizacyjna która się odpala przed kodem konstruktora, 
+    dzięki temu możesz przypisać referencję w trakcie tworzenia instancji klasy
+    */
     MainScreen(const SettingsType& _settings) : m_settings(_settings)
     {
         m_currentBarPosition = m_settings.screenSettings.barLenght;
@@ -436,80 +447,147 @@ class MainScreen
  
 class OptionsScreen
 {
+    bool displaySettingScreens = true;
     enum SettingsScreens : uint16_t{
-    eSetBegin = 1,
-    eSetTempUp = eSetBegin, 
-    eSetTempDown = 2, 
-    eSetPhUp = 3,
-    eSetPhDown = 4,
-    eSetPhTime = 5 ,
-    eSetPhPeriod = 6,    
-    eSetEnd
+        eSetBegin = 1,
+        eSetTempDown = eSetBegin, 
+        eSetTempUp = 2, 
+        eSetPhDown = 3,
+        eSetPhUp = 4,
+        eSetPhTime = 5 ,
+        eSetPhPeriod = 6,
+        eSetSave = 7,
+        eSetDefaults = 8,
+        eSetPhCalibration = 9,    
+        eSetEnd
     };
+
     
+    enum SettingsStatusScreens : uint16_t {
+        eOptionsSave,
+        eOptionsDefault        
+    };
+
+   
     uint32_t m_nextUpdateRead = 0;
     uint32_t m_nextUpdateJoystick = 0;
-    uint16_t m_screenState = SettingsScreens::eSetTempUp;    
+    uint16_t m_screenState = SettingsScreens::eSetBegin;
+    uint16_t m_screenStatusState;
     SettingsType *settingsPointer;
     
+    struct {
+        Fixed2 phGrade = 0.1f;
+        Fixed2 tempGrade = 0.5f;
+        uint16_t timeGrade = 1;
+        uint16_t intevalGrade = 1;
+    } settingsGrades;
 
-    void changeSetting (uint16_t screenState,bool add=true, float grade=0.1f)
+    struct {
+        uint16_t phMax = 8;
+        uint16_t phMin = 6;
+        uint16_t tempMin = 20;
+        uint16_t tempMax= 35;
+        uint16_t phIntervalMax = 60;
+        uint16_t phIntervalMin = 1;
+        uint16_t phTimeMax = 30;
+        uint16_t phTimeMin = 1;
+    } settingsLimits;
+
+    void changeSetting (uint16_t screenState,bool add=true)
     {   
         switch(screenState)
         {
-            case SettingsScreens::eSetTempUp:
-                if (add){settingsPointer->tempSettings.up+=grade;} else {settingsPointer->tempSettings.up-=grade;}
-            break;
             case SettingsScreens::eSetTempDown:
-            
-            break;
-            case SettingsScreens::eSetPhUp:
-            
-            break;
+                if (add && settingsPointer->tempSettings.down < settingsLimits.tempMax){
+                    settingsPointer->tempSettings.down+=settingsGrades.tempGrade;} 
+                else if (!add && settingsPointer->tempSettings.down > settingsLimits.tempMin){
+                    settingsPointer->tempSettings.down-=settingsGrades.tempGrade;}
+                break;
+            case SettingsScreens::eSetTempUp:                
+                if (add && settingsPointer->tempSettings.up < settingsLimits.tempMax){
+                    settingsPointer->tempSettings.up+=settingsGrades.tempGrade;} 
+                else if (!add && settingsPointer->tempSettings.up > settingsLimits.tempMin) {
+                    settingsPointer->tempSettings.up-=settingsGrades.tempGrade;}
+                break;
             case SettingsScreens::eSetPhDown:
-            
-            break;
+                if (add && settingsPointer->phSettings.down < settingsLimits.phMax){
+                    settingsPointer->phSettings.down+=settingsGrades.phGrade;}
+                else if (!add && settingsPointer->phSettings.down > settingsLimits.phMin) {
+                    settingsPointer->phSettings.down-=settingsGrades.phGrade;}
+                break;
+            case SettingsScreens::eSetPhUp:
+                if (add && settingsPointer->phSettings.up < settingsLimits.phMax){
+                    settingsPointer->phSettings.up+=settingsGrades.phGrade;} 
+                else if (!add &&  settingsPointer->phSettings.up > settingsLimits.phMin){
+                    settingsPointer->phSettings.up-=settingsGrades.phGrade;}
+                break;
             case SettingsScreens::eSetPhTime:
-            
-            break;
+                if (add && settingsPointer->phSettings.onTime < settingsLimits.phTimeMax){
+                    settingsPointer->phSettings.onTime+=settingsGrades.timeGrade;} 
+                else if (!add && settingsPointer->phSettings.onTime > settingsLimits.phTimeMin) {
+                    settingsPointer->phSettings.onTime-=settingsGrades.timeGrade;}
+                break;
             case SettingsScreens::eSetPhPeriod:
-            
-            break;
+                if (add && settingsPointer->phSettings.interval < settingsLimits.phIntervalMax){
+                    settingsPointer->phSettings.interval+=settingsGrades.intevalGrade;} 
+                else if (!add && settingsPointer->phSettings.interval > settingsLimits.phIntervalMin) {
+                    settingsPointer->phSettings.interval-=settingsGrades.intevalGrade;}
+                break;
         }
     }
 
     public:
-    
+    // _settings jest referencja typu SettingsType
     OptionsScreen(SettingsType& _settings)
     {
+        //do wzkaźnika zapisujemy adres obiketu _settings
         settingsPointer = &_settings;        
     }
     
-
-
     void render()
-    {    
+    {
+        if (displaySettingScreens){
             switch(m_screenState)
             {
                 case SettingsScreens::eSetTempUp:
-                screen::showSettings(20,35,"Gor temp (C):",settingsPointer->tempSettings.up);
-                break;
+                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Gor temp (C):",settingsPointer->tempSettings.up);
+                    break;
                 case SettingsScreens::eSetTempDown:
-                screen::showSettings(20,35,"Dol temp (C):",1);
-                break;
+                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Dol temp (C):",settingsPointer->tempSettings.down);
+                    break;
                 case SettingsScreens::eSetPhUp:
-                screen::showSettings(0,14,"Gor ph:",1);
-                break;
+                    screen::showSettings(settingsLimits.phMin,settingsLimits.phMax,"Gor ph:",settingsPointer->phSettings.up);
+                    break;
                 case SettingsScreens::eSetPhDown:
-                screen::showSettings(0,14,"Dol ph:",1);
-                break;
+                    screen::showSettings(settingsLimits.phMin,settingsLimits.phMax,"Dol ph:",settingsPointer->phSettings.down);
+                    break;
                 case SettingsScreens::eSetPhTime:
-                screen::showSettings(0,60,"Czas ph (s):",1);
-                break;
+                    screen::showSettings(settingsLimits.phTimeMin,settingsLimits.tempMax,"Czas ph (s):",settingsPointer->phSettings.onTime);
+                    break;
                 case SettingsScreens::eSetPhPeriod:
-                screen::showSettings(0,20,"Okres ph (m):",1);
-                break;
+                    screen::showSettings(settingsLimits.phIntervalMin,settingsLimits.phIntervalMax,"Okres ph (m):",settingsPointer->phSettings.interval);
+                    break;
+                case SettingsScreens::eSetSave:
+                    screen::showClickOption("Zapis ustawien");
+                    break;
+                case SettingsScreens::eSetDefaults:
+                    screen::showClickOption("Reset ustawien");
+                    break;
+                case SettingsScreens::eSetPhCalibration:
+                    screen::showClickOption("Kalibracja PH");
+                    break;
             }
+        }
+        else {
+                 switch(m_screenStatusState){
+                     case SettingsStatusScreens::eOptionsSave:
+                        screen::showClickOption("Zapisane",1,1500);
+                     break;
+                     case SettingsStatusScreens::eOptionsDefault:
+                        screen::showClickOption("Przywrocono",1,1500);
+                }
+            displaySettingScreens=true;
+        }
     }
 
  
@@ -522,47 +600,68 @@ class OptionsScreen
             switch (joyState)
             {
                 case JoyStatus::eLeft:           
-                m_screenState--;
-                if (m_screenState < SettingsScreens::eSetBegin) { m_screenState= SettingsScreens::eSetEnd -1 ;}
-                break;
+                    m_screenState--;
+                    if (m_screenState < SettingsScreens::eSetBegin) { m_screenState= SettingsScreens::eSetEnd -1 ;}
+                    break;
                 case JoyStatus::eRight:
-                m_screenState++;
-                if (m_screenState >= SettingsScreens::eSetEnd) { m_screenState = SettingsScreens::eSetBegin;}
-                break;
+                    m_screenState++;
+                    if (m_screenState >= SettingsScreens::eSetEnd) { m_screenState = SettingsScreens::eSetBegin;}
+                    break;
                 case JoyStatus::eUp:
                     changeSetting(m_screenState);
-                break;
+                    break;
                 case JoyStatus::eDown:
                     changeSetting(m_screenState,false);
-                break;
+                    break;
                 case JoyStatus::eSelect:
-
-                setNextScreen(ScreenType::eScreenSave);
+                    switch (m_screenState)
+                    {
+                        case SettingsScreens::eSetSave:
+                            m_screenStatusState = SettingsStatusScreens::eOptionsSave;
+                            m_screenState=SettingsScreens::eSetBegin;
+                            EEPROM.put( 0, settings);
+                            displaySettingScreens=false;
+                            break;
+                        case SettingsScreens::eSetDefaults:
+                            m_screenStatusState = SettingsStatusScreens::eOptionsDefault;
+                            m_screenState=SettingsScreens::eSetBegin;
+                            //defreferencja, zapisanie w miesjscu na ktore wskasuje wkaźnik
+                            *settingsPointer = SettingsType(); 
+                            displaySettingScreens = false;
+                            break;
+                        case SettingsScreens::eSetPhCalibration:
+                            setNextScreen(ScreenType::eScreenPhCalibraton);
+                            break;
+                        default:
+                            setNextScreen(ScreenType::eScreenMain);
+                            break;
+                    }
                 break;
             }
         }
     }
 };
 
-class SaveScreen
-{
+class PhCalibrationScreen{
+    uint16_t i = 0;
     public:
-    void render()
+    void startPhCalibration()
     {
-        screen::showSave();
-    }
-
-    void control(SettingsType settings)
-    {
-         //EEPROM.put(0, settings);  
-         setNextScreen(ScreenType::eScreenMain);       
+        if (i < 10){
+            screen::showClickOption("Umiesc sade w ph7",1,500);
+            i++;
+        }
+        else {
+            i=0;
+            setNextScreen(ScreenType::eScreenMain);
+        }
     }
 };
 
-
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
-SaveScreen screenSave;
+PhCalibrationScreen screenPhCalibraton;
+
 JoystickType joystick;
 
 void setup()
@@ -570,12 +669,13 @@ void setup()
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
-    //EEPROM.get( 0, settings);
+    Serial.println("Program Start");
+    EEPROM.get( 0, settings);
 }
 
 void loop()
 { 
-     switch(g_currentScreen)
+    switch(g_currentScreen)
     {
         case eScreenMain:
             screenMain.control(joystick.readState());
@@ -586,12 +686,9 @@ void loop()
             screenOptions.control(joystick.readState());
             screenOptions.render();
             break;
-         
-        case eScreenSave:
-            screenSave.control(settings);
-            screenSave.render();
-            break;    
-
+        case eScreenPhCalibraton:
+            screenPhCalibraton.startPhCalibration();
+            break;
     }
 
     if ( g_currentScreen != eScreenSettings)
