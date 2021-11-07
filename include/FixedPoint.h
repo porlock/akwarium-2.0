@@ -1,19 +1,19 @@
 #pragma once
 #include <stdint.h>
 
-template<typename T, uint32_t MUL>
+
+template<typename T, T Denominator>
 class FixedPoint
 {
 public:
 
-    FixedPoint(float f)
+    FixedPoint() : m_value(0)
     {
-        m_value = T(f * MUL);
     }
 
-    FixedPoint(uint32_t integer, uint32_t fraction)
+    FixedPoint(float f)
     {
-        m_value = T(integer * MUL) + T(fraction);
+        m_value = T(f * Denominator);
     }
 
     FixedPoint(const FixedPoint& f) = default;
@@ -36,39 +36,47 @@ public:
     FixedPoint& operator%=(const FixedPoint& b) { m_value %= b.m_value; return *this; }
     const FixedPoint operator%(const FixedPoint& b) const { FixedPoint result = *this; result %= b; return result; }
 
-    bool operator == (const FixedPoint& b) { return m_value == b.m_value; }
-    bool operator != (const FixedPoint& b) { return m_value != b.m_value; }
-    bool operator < (const FixedPoint& b) { return m_value < b.m_value; }
-    bool operator > (const FixedPoint& b) { return m_value > b.m_value; }
-    bool operator <= (const FixedPoint& b) { return m_value <= b.m_value; }
-    bool operator >= (const FixedPoint& b) { return m_value >= b.m_value; }
+    bool operator == (const FixedPoint& b) const { return m_value == b.m_value; }
+    bool operator != (const FixedPoint& b) const { return m_value != b.m_value; }
+    bool operator < (const FixedPoint& b) const { return m_value < b.m_value; }
+    bool operator > (const FixedPoint& b) const { return m_value > b.m_value; }
+    bool operator <= (const FixedPoint& b) const { return m_value <= b.m_value; }
+    bool operator >= (const FixedPoint& b) const { return m_value >= b.m_value; }
 
-
-    T getInteger()
+    T integer() const
     {
-        return m_value / MUL;
+        return m_value / Denominator;
     }
 
-    T getFraction()
+    T fraction() const
     {
-        return m_value % MUL;
+        const T frac = (m_value % Denominator);
+        return frac < 0 ? frac * -1 : frac;
     }
 
-    float asFloat()
+    float asFloat() const
     {
-        return (float)m_value / MUL;
-    }
-    
-    const char* asString()
-    {
-        static char buffer[16] = { 0 };
-        sprintf(buffer, "%u.%u", getInteger(), getFraction());
-        return buffer;
+        return float(m_value) / Denominator;
     }
 
-private:
+protected:
 
     T m_value;
 };
 
-typedef FixedPoint<uint32_t, 100> Fixed2;
+typedef FixedPoint<int8_t, 10>      F8x1;
+typedef FixedPoint<uint8_t, 10>     UF8x1;
+
+typedef FixedPoint<int16_t, 10>     F16x1;
+typedef FixedPoint<uint16_t, 10>    UF16x1;
+typedef FixedPoint<int16_t, 100>    F16x2;
+typedef FixedPoint<uint16_t, 100>   UF16x2;
+
+typedef FixedPoint<int32_t, 10>     F32x1;
+typedef FixedPoint<uint32_t, 10>    UF32x1;
+typedef FixedPoint<int32_t, 100>    F32x2;
+typedef FixedPoint<uint32_t, 100>   UF32x2;
+typedef FixedPoint<int32_t, 1000>   F32x3;
+typedef FixedPoint<uint32_t, 1000>  UF32x3;
+typedef FixedPoint<int32_t, 10000>  F32x4;
+typedef FixedPoint<uint32_t, 10000> UF32x4;

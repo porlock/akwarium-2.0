@@ -4,55 +4,9 @@
 #include <Adafruit_PCD8544.h>
 #include <EEPROM.h>
 #include "FixedPoint.h"
-
-
-
-enum Pins : uint16_t{
-    eDigitalPinSoundOut=6, 
-    eDigitalPinTempIn=4,
-    eDigitalPinJoySelect=12,
-    eAnalogPinJoyX=0,
-    eAnalogPinJoyY=1
-};
-
-
-/*
-#define DPIND_SOUNDOUT 6
-#define DPIN_TEMPIN 4
-#define DPIN_SELECT 12
-#define APIN_JOY_X 0
-#define APIN_JOY_Y 1
-#define APIN_PHIN 6
-#define DPIN_KOUT 2
-#define DPIN_ZOUT 5
-#define HEAT 3
-*/
-
-
-enum JoyStatus
-{
-    eUp,
-    eDown,
-    eLeft,
-    eRight,
-    eCenter,
-    eSelect
-};
-
-enum ScreenType
-{
-    eScreenMain,
-    eScreenSettings,
-    eScreenPhCalibraton,
-};
-
-ScreenType g_currentScreen = eScreenMain;
-ScreenType g_nextScreen = eScreenMain;
-
-void setNextScreen(ScreenType screen)
-{
-    g_nextScreen = screen;
-}
+#include "GlobalEnums.h"
+#include "ScreenManager.h"
+#include "screen.h"
  
 namespace heaterRelay
 {
@@ -66,154 +20,7 @@ namespace hciRelay
     void stop();
 }
 
-namespace screen
-{
 
-    Adafruit_PCD8544 display = Adafruit_PCD8544(11, 10, 9, 8);
-
-
-    struct IconsIndicatorsType{
-        bool refill;
-        bool hci;
-        bool heater;
-    } iconsIndicator {0,0,0};
-
-       constexpr byte fish[] PROGMEM = {
-		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
-		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
-		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
-		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
-		B00000000,B00000000,B00000000,B01111111,B00000000,B00000000,B00000000,
-		B00000000,B00000000,B00000011,B10000000,B11100000,B00000000,B00000000,
-		B00000000,B00000000,B00001101,B10000000,B00011000,B00000000,B00000000,
-		B00000000,B00000000,B00110001,B10000000,B00000110,B00000000,B00000000,
-		B00000000,B00000000,B01100101,B00000000,B00000011,B00000000,B00000000,
-		B00000111,B00000000,B11001001,B00000000,B00000001,B10000000,B00000000,
-		B00001000,B10000001,B00001001,B00000000,B00000000,B11000000,B00000000,
-		B00010000,B11000011,B00000001,B00000000,B01111000,B01100000,B00000000,
-		B00010000,B01000010,B00000001,B00000000,B11011100,B00100000,B00000000,
-		B00010000,B00100100,B00001001,B00000000,B11111100,B00110000,B00000000,
-		B00010000,B00100100,B10001001,B00000000,B11111100,B00010000,B00000000,
-		B00010000,B00101100,B10000101,B00000000,B11111100,B00011000,B00000000,
-		B00010000,B00111000,B10000001,B00000000,B01111000,B00001000,B00000000,
-		B00011000,B00011000,B10000001,B00000000,B00000000,B00001000,B00000000,
-		B00001000,B00011000,B10000001,B10000000,B00000000,B00001000,B00000000,
-		B00000100,B00011000,B01000100,B10000000,B00000000,B00001000,B00000000,
-		B00000011,B00011010,B00100100,B10000000,B00000000,B00001000,B00000000,
-		B00000011,B00011000,B00010100,B10000000,B00000010,B00001000,B00000000,
-		B00000100,B00011000,B00000100,B11000000,B00000000,B11001000,B00000000,
-		B00001000,B00011010,B00010100,B01000000,B00000000,B00001000,B00000000,
-		B00011000,B00011010,B00010010,B01100000,B00000000,B00001000,B00000000,
-		B00010000,B00111001,B00010001,B00100000,B00000000,B00001000,B00000000,
-		B00010000,B00101101,B10010000,B10110000,B00000000,B00011000,B00000000,
-		B00010000,B00100100,B10010000,B00010000,B00000000,B00010000,B00000000,
-		B00010000,B01100100,B00010000,B00011000,B00000000,B00110000,B00000000,
-		B00010000,B01000010,B00001000,B01001100,B00000000,B00100000,B00000000,
-		B00011000,B11000011,B00001100,B01000110,B00000000,B01100000,B00000000,
-		B00001101,B10000001,B10000000,B01000010,B00000000,B11000000,B00000000,
-		B00000111,B00000000,B10000000,B00100001,B00000001,B10000000,B00000000,
-		B00000000,B00000000,B01100000,B00010000,B11000011,B00000000,B00000000,
-		B00000000,B00000000,B00110000,B00001100,B01100110,B00000000,B00000000,
-		B00000000,B00000000,B00001100,B00000000,B00111000,B00000000,B00000000,
-		B00000000,B00000000,B00000011,B11000000,B11100000,B00000000,B00000000,
-		B00000000,B00000000,B00000000,B01111111,B00000000,B00000000,B00000000,
-		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
-		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
-		};
-
-        constexpr byte PROGMEM refresh[]= {
-        B00111110,B00000000,B01100011,B00000000,B11000001,B10000000,B10000000,B10000000,
-        B10000010,B10100000,B11000001,B11000000,B01100000,B10000000,B00110000,B00000000,
-        };
-
-    void initializeScreen()
-    {
-        display.begin();
-        display.setContrast(60);
-        display.clearDisplay();
-    }
-
-    void clearScreen()
-    {
-        display.clearDisplay();
-        display.display();
-    }
-
-    void showLogo()
-    {
-        display.drawBitmap(14, 4, fish, 56, 40, BLACK);        
-        display.display();
-        delay(5000);
-        clearScreen();   
-    }
-
-    void showReadings(uint16_t bottomBarLenght, const char* name, Fixed2 value, bool showRefreshIcon=false)
-    {
-        display.clearDisplay();
-        display.setTextColor(BLACK);
-        display.setTextSize(1);
-        
-        if (iconsIndicator.refill){display.setCursor(40,0); display.print("D");};
-        if (iconsIndicator.heater){display.setCursor(50,0); display.print("G");};
-        if (iconsIndicator.hci){display.setCursor(60,0); display.print("K");};
-
-        display.setCursor(0,0);
-        display.print(name); display.println(':');
-    
-        
-        display.println();
-        display.setTextSize(3);
-        if (value >=10) display.println(value.asFloat(),1);
-        else display.println(value.asFloat(),2);
-
-        if (showRefreshIcon)
-	  	{
-
-	        display.drawBitmap(73,6,refresh,16,8, BLACK);
-
-            display.setTextSize(1);
-            for (uint16_t i = 0; i < bottomBarLenght; i++)
-	        {
-                display.print('_');
-            }
-           
-	    }
-        display.display();       
-    }
-
-
-    void showSettings(uint16_t minValue, uint16_t maxValue, const char* name, Fixed2 value)
-    {
-        display.clearDisplay();
-        display.setTextSize(1);
-	    display.println("USTAWIENIA");
-  	    display.println(name);
-		display.print("od "); display.print(minValue); display.print(" do "); display.println(maxValue);
-        display.println();
-		display.setTextSize(2);
-		display.println(value.asFloat());   
-        display.display(); 
-    }
-
-    void showClickOption(const char* text, uint16_t fontSize=1, uint16_t pause=0)
-    {
-        display.clearDisplay();
-        display.setTextSize(fontSize);
-	    display.println(text);
-        display.display(); 
-        delay(pause);  
-    }
-
-    void showSave()
-    {
-        display.clearDisplay();
-        display.setTextSize(1);
-		display.println("Ustawienia");
-        display.println("zapisane");   
-        display.display();     
-    }
-
-}
 class JoystickType
 {
     private:
@@ -256,17 +63,17 @@ class JoystickType
 namespace probing{
 
     struct ReadingsType{
-        Fixed2 ph;
-        Fixed2 temp;
+        UF16x2 ph;
+        UF16x2 temp;
         bool waterLevel;
     } readings{7,25,false};
 
-    Fixed2 readPH()
+    UF16x2 readPH()
     {
         
     }
 
-    Fixed2 readTemp()
+    UF16x2 readTemp()
     {
         
     }
@@ -286,7 +93,7 @@ namespace control{
 
     uint32_t nextUpdateProbe = 0;
     
-    void ph(Fixed2 ph){
+    void ph(UF16x2 ph){
 
     }
 
@@ -307,8 +114,8 @@ namespace control{
         if (millis() - nextUpdateProbe > 500)
         {
             nextUpdateProbe = millis();      
-            Fixed2 temperature = probing::readTemp();
-            Fixed2 ph = probing::readPH();
+            UF16x2 temperature = probing::readTemp();
+            UF16x2 ph = probing::readPH();
             refill(probing::readWaterLevel());            
         }
     }
@@ -318,23 +125,23 @@ struct SettingsType
 {
     struct PhSettingsType
     {
-        Fixed2 up = 6.8f;
-        Fixed2 down = 6.5f;
+        UF16x2 up = 6.8f;
+        UF16x2 down = 6.5f;
         uint16_t interval = 10;
         uint16_t onTime = 2;
     }phSettings;
 
     struct TempSettingsType
     {
-        Fixed2 up = 27.0f;
-        Fixed2 down = 25.5f;
+        UF16x2 up = 27.0f;
+        UF16x2 down = 25.5f;
     }tempSettings;
 
     struct PhCalibrationSettingsType
     {
-        Fixed2 ph7V=0;
-        Fixed2 ph4V=0;
-        Fixed2 phFactor=0;
+        UF16x2 ph7V=0;
+        UF16x2 ph4V=0;
+        UF16x2 phFactor=0;
     }phCalibrationSettings;
 
     struct ScreenSettingsType
@@ -476,8 +283,8 @@ class OptionsScreen
     SettingsType *settingsPointer;
     
     struct {
-        Fixed2 phGrade = 0.1f;
-        Fixed2 tempGrade = 0.5f;
+        UF16x2 phGrade = 0.1f;
+        UF16x2 tempGrade = 0.5f;
         uint16_t timeGrade = 1;
         uint16_t intevalGrade = 1;
     } settingsGrades;
@@ -648,7 +455,7 @@ class PhCalibrationScreen{
     void startPhCalibration()
     {
         if (i < 10){
-            screen::showClickOption("Umiesc sade w ph7",1,500);
+            screen::showClickOption("Umiesc sade w ph4",1,500);
             i++;
         }
         else {
