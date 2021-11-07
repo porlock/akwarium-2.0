@@ -1,0 +1,6 @@
+#include <ScreenManager.h>>
+
+ScreenType g_currentScreen = eScreenMain;
+ScreenType g_nextScreen = eScreenMain;
+
+void setNextScreen(ScreenType screen){ g_nextScreen = screen;}

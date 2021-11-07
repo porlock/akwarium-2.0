@@ -29,9 +29,9 @@ struct SettingsType
         uint16_t barLenght=13;        
     }screenSettings;
 
-} settings;
+};
 
-//extern SettingsType settings;
+extern SettingsType settings;
 
 
 /*= {
