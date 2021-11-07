@@ -7,22 +7,20 @@
 
 namespace screen
 {
-    extern Adafruit_PCD8544 display;
-    
     struct IconsIndicatorsType{
         bool refill;
         bool hci;
         bool heater;
     };
-
+    // extern bo użyte po za tym plikiem
     extern IconsIndicatorsType iconsIndicator;
 
-    constexpr byte refresh[] PROGMEM= {
+    constexpr uint8_t refresh[] PROGMEM= {
         B00111110,B00000000,B01100011,B00000000,B11000001,B10000000,B10000000,B10000000,
         B10000010,B10100000,B11000001,B11000000,B01100000,B10000000,B00110000,B00000000,
         };
 
-    constexpr byte fish[] PROGMEM = {
+    constexpr uint8_t fish[] PROGMEM = {
 		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
 		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
 		B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,B00000000,
