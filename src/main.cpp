@@ -209,10 +209,13 @@ class MainScreen
     */
     MainScreen(const SettingsType& _settings) : m_settings(_settings)
     {
+    }
+
+    void init()
+    {
         m_currentBarPosition = m_settings.screenSettings.barLenght;
         m_maxBarPosition = m_currentBarPosition;
     }
-
 
 };
  
@@ -245,7 +248,7 @@ class OptionsScreen
     uint32_t m_nextUpdateJoystick = 0;
     uint16_t m_screenState = SettingsScreens::eSetBegin;
     uint16_t m_screenStatusState;
-    SettingsType *settingsPointer;
+    SettingsType& m_settings;
     
     struct {
         UF16x2 phGrade = 0.1f;
@@ -270,74 +273,76 @@ class OptionsScreen
         switch(screenState)
         {
             case SettingsScreens::eSetTempDown:
-                if (add && settingsPointer->tempSettings.down < settingsLimits.tempMax){
-                    settingsPointer->tempSettings.down+=settingsGrades.tempGrade;} 
-                else if (!add && settingsPointer->tempSettings.down > settingsLimits.tempMin){
-                    settingsPointer->tempSettings.down-=settingsGrades.tempGrade;}
+                if (add && m_settings.tempSettings.down < settingsLimits.tempMax){
+                    m_settings.tempSettings.down+=settingsGrades.tempGrade;} 
+                else if (!add && m_settings.tempSettings.down > settingsLimits.tempMin){
+                    m_settings.tempSettings.down-=settingsGrades.tempGrade;}
                 break;
             case SettingsScreens::eSetTempUp:                
-                if (add && settingsPointer->tempSettings.up < settingsLimits.tempMax){
-                    settingsPointer->tempSettings.up+=settingsGrades.tempGrade;} 
-                else if (!add && settingsPointer->tempSettings.up > settingsLimits.tempMin) {
-                    settingsPointer->tempSettings.up-=settingsGrades.tempGrade;}
+                if (add && m_settings.tempSettings.up < settingsLimits.tempMax){
+                    m_settings.tempSettings.up+=settingsGrades.tempGrade;} 
+                else if (!add && m_settings.tempSettings.up > settingsLimits.tempMin) {
+                    m_settings.tempSettings.up-=settingsGrades.tempGrade;}
                 break;
             case SettingsScreens::eSetPhDown:
-                if (add && settingsPointer->phSettings.down < settingsLimits.phMax){
-                    settingsPointer->phSettings.down+=settingsGrades.phGrade;}
-                else if (!add && settingsPointer->phSettings.down > settingsLimits.phMin) {
-                    settingsPointer->phSettings.down-=settingsGrades.phGrade;}
+                if (add && m_settings.phSettings.down < settingsLimits.phMax){
+                    m_settings.phSettings.down+=settingsGrades.phGrade;}
+                else if (!add && m_settings.phSettings.down > settingsLimits.phMin) {
+                    m_settings.phSettings.down-=settingsGrades.phGrade;}
                 break;
             case SettingsScreens::eSetPhUp:
-                if (add && settingsPointer->phSettings.up < settingsLimits.phMax){
-                    settingsPointer->phSettings.up+=settingsGrades.phGrade;} 
-                else if (!add &&  settingsPointer->phSettings.up > settingsLimits.phMin){
-                    settingsPointer->phSettings.up-=settingsGrades.phGrade;}
+                if (add && m_settings.phSettings.up < settingsLimits.phMax){
+                    m_settings.phSettings.up+=settingsGrades.phGrade;} 
+                else if (!add &&  m_settings.phSettings.up > settingsLimits.phMin){
+                    m_settings.phSettings.up-=settingsGrades.phGrade;}
                 break;
             case SettingsScreens::eSetPhTime:
-                if (add && settingsPointer->phSettings.onTime < settingsLimits.phTimeMax){
-                    settingsPointer->phSettings.onTime+=settingsGrades.timeGrade;} 
-                else if (!add && settingsPointer->phSettings.onTime > settingsLimits.phTimeMin) {
-                    settingsPointer->phSettings.onTime-=settingsGrades.timeGrade;}
+                if (add && m_settings.phSettings.onTime < settingsLimits.phTimeMax){
+                    m_settings.phSettings.onTime+=settingsGrades.timeGrade;} 
+                else if (!add && m_settings.phSettings.onTime > settingsLimits.phTimeMin) {
+                    m_settings.phSettings.onTime-=settingsGrades.timeGrade;}
                 break;
             case SettingsScreens::eSetPhPeriod:
-                if (add && settingsPointer->phSettings.interval < settingsLimits.phIntervalMax){
-                    settingsPointer->phSettings.interval+=settingsGrades.intevalGrade;} 
-                else if (!add && settingsPointer->phSettings.interval > settingsLimits.phIntervalMin) {
-                    settingsPointer->phSettings.interval-=settingsGrades.intevalGrade;}
+                if (add && m_settings.phSettings.interval < settingsLimits.phIntervalMax){
+                    m_settings.phSettings.interval+=settingsGrades.intevalGrade;} 
+                else if (!add && m_settings.phSettings.interval > settingsLimits.phIntervalMin) {
+                    m_settings.phSettings.interval-=settingsGrades.intevalGrade;}
                 break;
         }
     }
 
     public:
     // _settings jest referencja typu SettingsType
-    OptionsScreen(SettingsType& _settings)
-    {
-        //do wzkaźnika zapisujemy adres obiketu _settings
-        settingsPointer = &_settings;        
+    OptionsScreen(SettingsType& _settings) : m_settings(_settings)
+    {    
     }
     
+    void init()
+    {
+    }
+
     void render()
     {
         if (displaySettingScreens){
             switch(m_screenState)
             {
                 case SettingsScreens::eSetTempUp:
-                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Gor temp (C):",settingsPointer->tempSettings.up);
+                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Gor temp (C):",m_settings.tempSettings.up);
                     break;
                 case SettingsScreens::eSetTempDown:
-                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Dol temp (C):",settingsPointer->tempSettings.down);
+                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Dol temp (C):",m_settings.tempSettings.down);
                     break;
                 case SettingsScreens::eSetPhUp:
-                    screen::showSettings(settingsLimits.phMin,settingsLimits.phMax,"Gor ph:",settingsPointer->phSettings.up);
+                    screen::showSettings(settingsLimits.phMin,settingsLimits.phMax,"Gor ph:",m_settings.phSettings.up);
                     break;
                 case SettingsScreens::eSetPhDown:
-                    screen::showSettings(settingsLimits.phMin,settingsLimits.phMax,"Dol ph:",settingsPointer->phSettings.down);
+                    screen::showSettings(settingsLimits.phMin,settingsLimits.phMax,"Dol ph:",m_settings.phSettings.down);
                     break;
                 case SettingsScreens::eSetPhTime:
-                    screen::showSettings(settingsLimits.phTimeMin,settingsLimits.tempMax,"Czas ph (s):",settingsPointer->phSettings.onTime);
+                    screen::showSettings(settingsLimits.phTimeMin,settingsLimits.tempMax,"Czas ph (s):",m_settings.phSettings.onTime);
                     break;
                 case SettingsScreens::eSetPhPeriod:
-                    screen::showSettings(settingsLimits.phIntervalMin,settingsLimits.phIntervalMax,"Okres ph (m):",settingsPointer->phSettings.interval);
+                    screen::showSettings(settingsLimits.phIntervalMin,settingsLimits.phIntervalMax,"Okres ph (m):",m_settings.phSettings.interval);
                     break;
                 case SettingsScreens::eSetSave:
                     screen::showClickOption("Zapis ustawien");
@@ -398,7 +403,7 @@ class OptionsScreen
                             m_screenStatusState = SettingsStatusScreens::eOptionsDefault;
                             m_screenState=SettingsScreens::eSetBegin;
                             //defreferencja, zapisanie w miesjscu na ktore wskasuje wkaźnik
-                            *settingsPointer = SettingsType(); 
+                            m_settings = defaultSettings;
                             displaySettingScreens = false;
                             break;
                         case SettingsScreens::eSetPhCalibration:
@@ -443,6 +448,9 @@ void setup()
     Serial.begin(9600);
     Serial.println("Program Start");
     EEPROM.get( 0, settings);
+
+    screenMain.init();
+    screenOptions.init();
 }
 
 void loop()

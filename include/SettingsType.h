@@ -5,38 +5,33 @@ struct SettingsType
 {
     struct PhSettingsType
     {
-        UF16x2 up = 6.8f;
-        UF16x2 down = 6.5f;
-        uint16_t interval = 10;
-        uint16_t onTime = 2;
+        UF16x2 up;
+        UF16x2 down;
+        uint16_t interval;
+        uint16_t onTime;
     }phSettings;
 
     struct TempSettingsType
     {
-        UF16x2 up = 27.0f;
-        UF16x2 down = 25.5f;
+        UF16x2 up;
+        UF16x2 down;
     }tempSettings;
 
     struct PhCalibrationSettingsType
     {
-        UF16x2 ph7V=0;
-        UF16x2 ph4V=0;
-        UF16x2 phFactor=0;
+        UF16x2 ph7V;
+        UF16x2 ph4V;
+        UF16x2 phFactor;
     }phCalibrationSettings;
 
     struct ScreenSettingsType
     {
-        uint16_t barLenght=13;        
+        uint16_t barLenght;        
     }screenSettings;
 
 };
 
+extern SettingsType defaultSettings;
 extern SettingsType settings;
 
 
-/*= {
-    {6.7f, 6.5f, 300, 3},
-    {27.0f,25.5f},
-    {0.00f,0.00f,0.00f},
-    {15}
-}*/;
