@@ -43,7 +43,7 @@ enum ScreenType
 {
     eScreenMain,
     eScreenSettings,
-    eScreenSave,
+    eScreenPhCalibraton,
 };
 
 ScreenType g_currentScreen = eScreenMain;
@@ -220,8 +220,7 @@ class JoystickType
         uint16_t horizontal, vertical, select;
         JoyStatus status = JoyStatus::eCenter;
         JoyStatus prevStatus = JoyStatus::eCenter;
-        void readPins()
-        {
+        void readPins(){
             horizontal = analogRead(Pins::eAnalogPinJoyX);
 	        vertical = analogRead(Pins::eAnalogPinJoyY);
             select = digitalRead(Pins::eDigitalPinJoySelect);            
@@ -458,7 +457,8 @@ class OptionsScreen
         eSetPhTime = 5 ,
         eSetPhPeriod = 6,
         eSetSave = 7,
-        eSetDefaults = 8,    
+        eSetDefaults = 8,
+        eSetPhCalibration = 9,    
         eSetEnd
     };
 
@@ -572,7 +572,10 @@ class OptionsScreen
                     break;
                 case SettingsScreens::eSetDefaults:
                     screen::showClickOption("Reset ustawien");
-                    break;    
+                    break;
+                case SettingsScreens::eSetPhCalibration:
+                    screen::showClickOption("Kalibracja PH");
+                    break;
             }
         }
         else {
@@ -613,18 +616,21 @@ class OptionsScreen
                 case JoyStatus::eSelect:
                     switch (m_screenState)
                     {
-                        case OptionsScreen::eSetSave:
+                        case SettingsScreens::eSetSave:
                             m_screenStatusState = SettingsStatusScreens::eOptionsSave;
                             m_screenState=SettingsScreens::eSetBegin;
                             EEPROM.put( 0, settings);
                             displaySettingScreens=false;
                             break;
-                        case OptionsScreen::eSetDefaults:
+                        case SettingsScreens::eSetDefaults:
                             m_screenStatusState = SettingsStatusScreens::eOptionsDefault;
                             m_screenState=SettingsScreens::eSetBegin;
                             //defreferencja, zapisanie w miesjscu na ktore wskasuje wkaźnik
                             *settingsPointer = SettingsType(); 
                             displaySettingScreens = false;
+                            break;
+                        case SettingsScreens::eSetPhCalibration:
+                            setNextScreen(ScreenType::eScreenPhCalibraton);
                             break;
                         default:
                             setNextScreen(ScreenType::eScreenMain);
@@ -636,8 +642,26 @@ class OptionsScreen
     }
 };
 
+class PhCalibrationScreen{
+    uint16_t i = 0;
+    public:
+    void startPhCalibration()
+    {
+        if (i < 10){
+            screen::showClickOption("Umiesc sade w ph7",1,500);
+            i++;
+        }
+        else {
+            i=0;
+            setNextScreen(ScreenType::eScreenMain);
+        }
+    }
+};
+
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
+PhCalibrationScreen screenPhCalibraton;
+
 JoystickType joystick;
 
 void setup()
@@ -661,6 +685,9 @@ void loop()
         case eScreenSettings:
             screenOptions.control(joystick.readState());
             screenOptions.render();
+            break;
+        case eScreenPhCalibraton:
+            screenPhCalibraton.startPhCalibration();
             break;
     }
 
