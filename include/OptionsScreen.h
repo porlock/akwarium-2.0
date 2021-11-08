@@ -53,15 +53,15 @@ public:
 // private method declarations
 private:
 
-    void changeSetting(uint16_t screenState, bool add = true);
+    void changeSetting(uint16_t , bool  = true);
  
 // public method declarations
 public:
 
-    OptionsScreen(SettingsType& _settings);
+    OptionsScreen(SettingsType&);
     void init();
     void render();
-    void control(JoyStatus status);
+    void control(JoyStatus);
 
 // private member declarations
 private:

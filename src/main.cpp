@@ -12,6 +12,7 @@
 #include "JoystickType.h"
 
 #include "OptionsScreen.h"
+#include "MainScreen.h"
 
 namespace heaterRelay
 {
@@ -88,124 +89,6 @@ namespace control
     }
 }
 
-class MainScreen
-{
-
-    enum ReadScreens : uint16_t
-    {
-        eScreenReadBegin = 1,
-        eScreenReadTemp = eScreenReadBegin,
-        eScreenReadPh = 2,
-        eScreenReadCorousel = 3,
-        eScreenReadEnd
-    };
-
-    uint16_t m_currentBarPosition = 0;
-    uint16_t m_maxBarPosition = 0;
-    uint32_t m_nextUpdateRead = 0;
-    uint32_t m_nextUpdateJoystick = 0;
-    bool skip = true;
-    char m_readType = 'P';
-    uint16_t m_screenState = ReadScreens::eScreenReadCorousel;
-
-public:
-    void render()
-    {
-        if (millis() - m_nextUpdateRead > 500)
-        {
-            m_nextUpdateRead = millis();
-
-            switch (m_screenState)
-            {
-            case ReadScreens::eScreenReadTemp:
-                screen::showReadings(m_currentBarPosition, "Temp", 27.5);
-                break;
-            case ReadScreens::eScreenReadPh:
-                screen::showReadings(m_currentBarPosition, "Ph", 7.5);
-                break;
-            case ReadScreens::eScreenReadCorousel:
-                if (skip)
-                {
-                    m_currentBarPosition--;
-                    skip = false;
-                }
-                else
-                {
-                    skip = true;
-                }
-                switch (m_readType)
-                {
-                case 'P':
-                    screen::showReadings(m_currentBarPosition, "Ph", m_currentBarPosition, true);
-                    break;
-                case 'T':
-                    screen::showReadings(m_currentBarPosition, "Temp", m_currentBarPosition, true);
-                    break;
-                }
-                if (m_currentBarPosition == 0)
-                {
-                    m_currentBarPosition = m_maxBarPosition;
-                    if (m_readType == 'T')
-                    {
-                        m_readType = 'P';
-                    }
-                    else
-                    {
-                        m_readType = 'T';
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    void control(JoyStatus joyState)
-    {
-        if (millis() - m_nextUpdateJoystick > 100)
-        {
-            m_nextUpdateJoystick = millis();
-            switch (joyState)
-            {
-            case JoyStatus::eLeft:
-                m_screenState--;
-                if (m_screenState < ReadScreens::eScreenReadBegin)
-                {
-                    m_screenState = ReadScreens::eScreenReadEnd - 1;
-                }
-                break;
-            case JoyStatus::eRight:
-                m_screenState++;
-                if (m_screenState >= ReadScreens::eScreenReadEnd)
-                {
-                    m_screenState = ReadScreens::eScreenReadBegin;
-                }
-                break;
-            case JoyStatus::eSelect:
-                setNextScreen(ScreenType::eScreenSettings);
-                break;
-            }
-        }
-    }
-
-    // m_settings jest referencja typu SettingsType
-    const SettingsType &m_settings;
-
-    /* 
-    m_settings(_settings)
-    to jest lista inicjalizacyjna która się odpala przed kodem konstruktora, 
-    dzięki temu możesz przypisać referencję w trakcie tworzenia instancji klasy
-    */
-    MainScreen(const SettingsType &_settings) : m_settings(_settings)
-    {
-    }
-
-    void init()
-    {
-        m_currentBarPosition = m_settings.screenSettings.barLenght;
-        m_maxBarPosition = m_currentBarPosition;
-    }
-};
-
 class PhCalibrationScreen
 {
     uint16_t i = 0;
@@ -247,14 +130,17 @@ void setup()
 
 void loop()
 {
+    Serial.println(g_currentScreen);
     switch (g_currentScreen)
     {
     case eScreenMain:
+        //Serial.println("main screen");
         screenMain.control(joystick.readState());
         screenMain.render();
         break;
 
     case eScreenSettings:
+        //Serial.println("setting screen");
         screenOptions.control(joystick.readState());
         screenOptions.render();
         break;

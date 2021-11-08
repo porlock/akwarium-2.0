@@ -4,8 +4,11 @@
 OptionsScreen::OptionsScreen(SettingsType& _settings) : m_settings(_settings)
 {
     displaySettingScreens=true;
+    m_nextUpdateRead=0;
+    m_nextUpdateJoystick=0;
+    m_screenState = SettingsScreens::eSetBegin;
     settingsGrades={0.1f,0.5f,1,1};
-    settingsLimits={8,6,20,35,60,1,30,1};
+    settingsLimits={8,6,20,35,60,1,30,1};    
 }
 
 void OptionsScreen::changeSetting(uint16_t screenState, bool add)
