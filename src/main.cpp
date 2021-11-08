@@ -3,11 +3,13 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include <EEPROM.h>
+
 #include "FixedPoint.h"
 #include "GlobalEnums.h"
 #include "ScreenManager.h"
 #include "screen.h"
 #include "SettingsType.h"
+#include "JoystickType.h"
  
 namespace heaterRelay
 {
@@ -20,46 +22,6 @@ namespace hciRelay
     void start();
     void stop();
 }
-
-
-class JoystickType
-{
-    private:
-        uint16_t horizontal, vertical, select;
-        JoyStatus status = JoyStatus::eCenter;
-        JoyStatus prevStatus = JoyStatus::eCenter;
-        void readPins(){
-            horizontal = analogRead(Pins::eAnalogPinJoyX);
-	        vertical = analogRead(Pins::eAnalogPinJoyY);
-            select = digitalRead(Pins::eDigitalPinJoySelect);            
-        }
-        void beep(){
-            analogWrite(Pins::eDigitalPinSoundOut, 50);
-            delay(100);
-            digitalWrite(Pins::eDigitalPinSoundOut, LOW);
-        }
-   
-    public:
-        JoyStatus readState()
-        {
-            readPins();
-            if (!select) {status = JoyStatus::eSelect; }
-            else if (horizontal >700 ) {status = JoyStatus::eLeft; }
-            else if (horizontal <300) {status = JoyStatus::eRight; }
-            else if (vertical > 700) {status = JoyStatus::eDown;}
-            else if (vertical < 300) {status = JoyStatus::eUp;}
-            else {status = JoyStatus::eCenter;}
-          
-            if (status == prevStatus){
-                return JoyStatus::eCenter;                
-            }
-            prevStatus=status;            
-            beep();
-            return status;
-        }
-    
-};
-
 
 namespace probing{
 

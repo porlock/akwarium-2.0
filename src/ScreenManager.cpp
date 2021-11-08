@@ -1,4 +1,4 @@
-#include <ScreenManager.h>>
+#include <ScreenManager.h>
 
 ScreenType g_currentScreen = eScreenMain;
 ScreenType g_nextScreen = eScreenMain;

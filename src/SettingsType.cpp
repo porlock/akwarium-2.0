@@ -1,4 +1,4 @@
-#include "SettingsType.h"
+#include <SettingsType.h>
 
 SettingsType defaultSettings =
 {

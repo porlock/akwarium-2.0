@@ -1,5 +1,5 @@
 #pragma once
-#include "FixedPoint.h"
+#include <FixedPoint.h>
 
 struct SettingsType
 {

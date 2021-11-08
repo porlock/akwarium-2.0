@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <screen.h>
 
 namespace screen
