@@ -67,7 +67,8 @@ namespace screen
     void clearScreen();
     void showLogo();
     void showReadings(uint16_t , const char* , UF16x2 , bool = false);
-    void showSettings(uint16_t , uint16_t , const char* , UF16x2 );
+    void showSettings(UF16x2 , UF16x2 , const char* , UF16x2 );
+	void showSettings(uint16_t , uint16_t , const char* , uint16_t );
     void showClickOption(const char* , uint16_t = 1, uint16_t = 0);
     void showSave();
 }

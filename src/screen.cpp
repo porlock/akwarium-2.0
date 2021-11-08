@@ -76,21 +76,37 @@ namespace screen
         display.display();
     }
 
-    void showSettings(uint16_t minValue, uint16_t maxValue, const char *name, UF16x2 value)
+    void showSettings(UF16x2 minValue, UF16x2 maxValue, const char *name, UF16x2 value)
     {
         display.clearDisplay();
         display.setTextSize(1);
         display.println("USTAWIENIA");
         display.println(name);
-        display.print("od ");
-        display.print(minValue);
-        display.print(" do ");
-        display.println(maxValue);
+        display.print(minValue.asFloat());
+        display.print(" - ");
+        display.println(maxValue.asFloat());
         display.println();
         display.setTextSize(2);
         display.println(value.asFloat());
         display.display();
     }
+
+    
+    void showSettings(uint16_t minValue, uint16_t maxValue, const char *name, uint16_t value)
+    {
+        display.clearDisplay();
+        display.setTextSize(1);
+        display.println("USTAWIENIA");
+        display.println(name);
+        display.print(minValue);
+        display.print(" - ");
+        display.println(maxValue);
+        display.println();
+        display.setTextSize(2);
+        display.println(value);
+        display.display();
+    }
+
 
     void showClickOption(const char *text, uint16_t fontSize, uint16_t pause)
     {

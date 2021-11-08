@@ -258,10 +258,10 @@ class OptionsScreen
     } settingsGrades;
 
     struct {
-        uint16_t phMax = 8;
-        uint16_t phMin = 6;
-        uint16_t tempMin = 20;
-        uint16_t tempMax= 35;
+        UF16x2 phMax = 8;
+        UF16x2 phMin = 6;
+        UF16x2 tempMin = 20;
+        UF16x2 tempMax= 35;
         uint16_t phIntervalMax = 60;
         uint16_t phIntervalMin = 1;
         uint16_t phTimeMax = 30;
@@ -327,7 +327,7 @@ class OptionsScreen
             switch(m_screenState)
             {
                 case SettingsScreens::eSetTempUp:
-                    screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Gor temp (C):",m_settings.tempSettings.up);
+                    screen::showSettings(max(settingsLimits.tempMin,m_settings.tempSettings.down),settingsLimits.tempMax,"Gor temp (C):",m_settings.tempSettings.up);
                     break;
                 case SettingsScreens::eSetTempDown:
                     screen::showSettings(settingsLimits.tempMin,settingsLimits.tempMax,"Dol temp (C):",m_settings.tempSettings.down);
@@ -339,7 +339,7 @@ class OptionsScreen
                     screen::showSettings(settingsLimits.phMin,settingsLimits.phMax,"Dol ph:",m_settings.phSettings.down);
                     break;
                 case SettingsScreens::eSetPhTime:
-                    screen::showSettings(settingsLimits.phTimeMin,settingsLimits.tempMax,"Czas ph (s):",m_settings.phSettings.onTime);
+                    screen::showSettings(settingsLimits.phTimeMin,settingsLimits.phTimeMax,"Czas ph (s):",m_settings.phSettings.onTime);
                     break;
                 case SettingsScreens::eSetPhPeriod:
                     screen::showSettings(settingsLimits.phIntervalMin,settingsLimits.phIntervalMax,"Okres ph (m):",m_settings.phSettings.interval);
@@ -403,6 +403,7 @@ class OptionsScreen
                             m_screenStatusState = SettingsStatusScreens::eOptionsDefault;
                             m_screenState=SettingsScreens::eSetBegin;
                             //defreferencja, zapisanie w miesjscu na ktore wskasuje wkaźnik
+                            //*settingsPointer = SettingsType(); 
                             m_settings = defaultSettings;
                             displaySettingScreens = false;
                             break;
@@ -424,6 +425,7 @@ class PhCalibrationScreen{
     public:
     void startPhCalibration()
     {
+      
         if (i < 10){
             screen::showClickOption("Umiesc sade w ph4",1,500);
             i++;
