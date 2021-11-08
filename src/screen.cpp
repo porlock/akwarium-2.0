@@ -105,9 +105,9 @@ namespace screen
         display.println();
         display.setTextSize(3);
         if (value >= 10)
-            display.println(value.asFloat(), 1);
+            display.println(value.as_float(), 1);
         else
-            display.println(value.asFloat(), 2);
+            display.println(value.as_float(), 2);
 
         if (showRefreshIcon)
         {
@@ -129,12 +129,12 @@ namespace screen
         display.setTextSize(1);
         display.println("USTAWIENIA");
         display.println(name);
-        display.print(minValue.asFloat());
+        display.print(minValue.as_float());
         display.print(" - ");
-        display.println(maxValue.asFloat());
+        display.println(maxValue.as_float());
         display.println();
         display.setTextSize(2);
-        display.println(value.asFloat());
+        display.println(value.as_float());
         display.display();
     }
 
