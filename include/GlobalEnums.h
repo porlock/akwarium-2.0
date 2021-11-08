@@ -1,14 +1,14 @@
 #pragma once
 #include <stdint.h>
 
-enum Pins : uint16_t{
-    eDigitalPinSoundOut=6, 
-    eDigitalPinTempIn=4,
-    eDigitalPinJoySelect=12,
-    eAnalogPinJoyX=0,
-    eAnalogPinJoyY=1
+enum Pins : uint16_t
+{
+    eDigitalPinSoundOut = 6,
+    eDigitalPinTempIn = 4,
+    eDigitalPinJoySelect = 12,
+    eAnalogPinJoyX = 0,
+    eAnalogPinJoyY = 1
 };
-
 
 /*
 #define DPIND_SOUNDOUT 6
@@ -21,7 +21,6 @@ enum Pins : uint16_t{
 #define DPIN_ZOUT 5
 #define HEAT 3
 */
-
 
 enum JoyStatus
 {
