@@ -13,21 +13,12 @@
 
 #include "OptionsScreen.h"
 #include "MainScreen.h"
+#include "PhCalibrationScreen.h"
 
-namespace heaterRelay
-{
-    void start();
-    void stop();
-}
-
-namespace hciRelay
-{
-    void start();
-    void stop();
-}
 
 namespace probing
 {
+    uint32_t nextUpdateProbing = 0;
 
     struct ReadingsType
     {
@@ -38,77 +29,85 @@ namespace probing
 
     UF16x2 readPH()
     {
+       readings.ph = 7.30;
     }
 
     UF16x2 readTemp()
     {
+        readings.temp = 27;
     }
 
     bool readWaterLevel()
     {
-        return true;
+        readings.waterLevel = true;
     }
 
     void runProbbingLoop()
     {
+        if (millis() - nextUpdateProbing > 100)
+        {
+            readWaterLevel();
+            readPH();
+            readTemp();
+        }
     }
 }
 
 namespace control
 {
+    void heaterStart(){
 
-    uint32_t nextUpdateProbe = 0;
-
-    void ph(UF16x2 ph)
-    {
     }
+
+    void waterRelayStart()
+    {
+
+    }
+
+    void waterRelayStop()
+    {
+        
+    }
+
+
+    void heaterStop(){
+
+    }
+
+    void hciControll()
+    {
+
+    }
+
+
+    uint32_t nextUpdateControl = 0;
 
     void refill(bool waterLevel)
     {
-        //iconsIndicator->refill = waterLevel;
-        screen::iconsIndicator.refill = waterLevel;
+        
         if (waterLevel)
         {
-            uint16_t i = 1;
+            screen::iconsIndicator.refill = waterLevel;
+            waterRelayStart();
         }
-        else
+        else 
         {
-            uint16_t i = 0;
+            waterRelayStop();
         }
     }
 
     void runLoop()
     {
-        if (millis() - nextUpdateProbe > 500)
+        if (millis() - nextUpdateControl > 100)
         {
-            nextUpdateProbe = millis();
-            UF16x2 temperature = probing::readTemp();
+            nextUpdateControl = millis();
+            /*UF16x2 temperature = probing::readTemp();
             UF16x2 ph = probing::readPH();
-            refill(probing::readWaterLevel());
+            */
+            refill(probing::readings.waterLevel);
         }
     }
 }
-
-class PhCalibrationScreen
-{
-    uint16_t i = 0;
-
-public:
-    void startPhCalibration()
-    {
-
-        if (i < 10)
-        {
-            screen::showClickOption("Umiesc sade w ph4", 1, 500);
-            i++;
-        }
-        else
-        {
-            i = 0;
-            setNextScreen(ScreenType::eScreenMain);
-        }
-    }
-};
 
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
@@ -134,13 +133,11 @@ void loop()
     switch (g_currentScreen)
     {
     case eScreenMain:
-        //Serial.println("main screen");
         screenMain.control(joystick.readState());
         screenMain.render();
         break;
 
     case eScreenSettings:
-        //Serial.println("setting screen");
         screenOptions.control(joystick.readState());
         screenOptions.render();
         break;
@@ -152,6 +149,7 @@ void loop()
     if (g_currentScreen != eScreenSettings)
     {
         control::runLoop();
+        probing::runProbbingLoop();
     }
 
     if (g_currentScreen != g_nextScreen)
