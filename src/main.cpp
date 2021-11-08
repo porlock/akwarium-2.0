@@ -11,6 +11,8 @@
 #include "SettingsType.h"
 #include "JoystickType.h"
 
+#include "OptionsScreen.h"
+
 namespace heaterRelay
 {
     void start();
