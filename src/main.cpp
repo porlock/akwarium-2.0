@@ -15,6 +15,51 @@
 #include "MainScreen.h"
 #include "PhCalibrationScreen.h"
 
+class RelayType
+{
+
+private:
+    uint32_t clock;
+    uint8_t outPin, period;
+    bool go;
+
+public:
+    RelayType(uint8_t _outPin = 0)
+    {
+        outPin = _outPin;
+        clock = 0;
+        period = 50000;
+        go = false;
+    };
+
+    void setClockOn()
+    {
+        if (millis() - clock > 5000)
+        {
+            Serial.println("raz na 5s");
+            clock = millis();
+            go = true;
+        }
+
+        if (go)
+        {
+            if (millis() - clock < 500)
+            {
+                 Serial.println("leje kwas");
+            }
+            else
+            {
+                setOff();
+                go = false;
+            }
+        }
+    };
+
+    void setOff()
+    {
+        Serial.println("kwas stop");
+    }
+};
 
 namespace probing
 {
@@ -27,12 +72,12 @@ namespace probing
         bool waterLevel;
     } readings{7, 25, false};
 
-    UF16x2 readPH()
+    void readPH()
     {
-       readings.ph = 7.30;
+        readings.ph = 7.30;
     }
 
-    UF16x2 readTemp()
+    void readTemp()
     {
         readings.temp = 27;
     }
@@ -42,7 +87,7 @@ namespace probing
         readings.waterLevel = true;
     }
 
-    void runProbbingLoop()
+    void runLoop()
     {
         if (millis() - nextUpdateProbing > 100)
         {
@@ -55,42 +100,47 @@ namespace probing
 
 namespace control
 {
-    void heaterStart(){
+    RelayType hciRelay;
 
+    void heaterStart()
+    {
     }
 
     void waterRelayStart()
     {
-
     }
 
     void waterRelayStop()
     {
-        
     }
 
-
-    void heaterStop(){
-
-    }
-
-    void hciControll()
+    void heaterStop()
     {
-
     }
 
+    void hciControll(UF16x2 pH)
+    {
+        if (pH > 7)
+        {
+            hciRelay.setClockOn();
+        }
+        else
+        {
+            hciRelay.setOff();
+        }
+    }
 
     uint32_t nextUpdateControl = 0;
 
     void refill(bool waterLevel)
     {
-        
+
         if (waterLevel)
         {
             screen::iconsIndicator.refill = waterLevel;
             waterRelayStart();
         }
-        else 
+        else
         {
             waterRelayStop();
         }
@@ -101,9 +151,7 @@ namespace control
         if (millis() - nextUpdateControl > 100)
         {
             nextUpdateControl = millis();
-            /*UF16x2 temperature = probing::readTemp();
-            UF16x2 ph = probing::readPH();
-            */
+            hciControll(probing::readings.ph);
             refill(probing::readings.waterLevel);
         }
     }
@@ -112,7 +160,6 @@ namespace control
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
 PhCalibrationScreen screenPhCalibraton;
-
 JoystickType joystick;
 
 void setup()
@@ -122,14 +169,12 @@ void setup()
     Serial.begin(9600);
     Serial.println("Program Start");
     EEPROM.get(0, settings);
-
     screenMain.init();
     screenOptions.init();
 }
 
 void loop()
 {
-    Serial.println(g_currentScreen);
     switch (g_currentScreen)
     {
     case eScreenMain:
@@ -148,8 +193,8 @@ void loop()
 
     if (g_currentScreen != eScreenSettings)
     {
+        probing::runLoop();
         control::runLoop();
-        probing::runProbbingLoop();
     }
 
     if (g_currentScreen != g_nextScreen)
