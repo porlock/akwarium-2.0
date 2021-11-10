@@ -6,8 +6,12 @@ enum Pins : uint16_t
     eDigitalPinSoundOut = 6,
     eDigitalPinTempIn = 4,
     eDigitalPinJoySelect = 12,
+    eDigitalPinHclOut = 2,
+    eDigitalPinHeaterOut = 3,
+    eDigitalPinWaterOut = 5,
     eAnalogPinJoyX = 0,
     eAnalogPinJoyY = 1
+
 };
 
 /*

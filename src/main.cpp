@@ -20,32 +20,41 @@ class RelayType
 
 private:
     uint32_t clock;
-    uint8_t outPin, period;
+    uint8_t outPin;
+    uint8_t period;
+    bool inverted;
     bool go;
 
 public:
-    RelayType(uint8_t _outPin = 0)
+    RelayType(uint8_t _outPin, bool invertedLogic = false)
     {
         outPin = _outPin;
         clock = 0;
-        period = 50000;
         go = false;
+        inverted = invertedLogic;
     };
 
-    void setClockOn()
+    void setOn()
     {
-        if (millis() - clock > 5000)
+        if (inverted)
+            digitalWrite(outPin, LOW);
+        else
+            digitalWrite(outPin, HIGH);
+    };
+
+    void setClockOn(uint32_t onTimeMilis, uint32_t intervalMilis)
+    {
+        if (millis() - clock > intervalMilis)
         {
-            Serial.println("raz na 5s");
             clock = millis();
             go = true;
         }
 
         if (go)
         {
-            if (millis() - clock < 500)
+            if (millis() - clock < onTimeMilis)
             {
-                 Serial.println("leje kwas");
+                void setOn();
             }
             else
             {
@@ -57,7 +66,10 @@ public:
 
     void setOff()
     {
-        Serial.println("kwas stop");
+        if (inverted)
+            digitalWrite(outPin, HIGH);
+        else
+            digitalWrite(outPin, LOW);
     }
 };
 
@@ -70,7 +82,7 @@ namespace probing
         UF16x2 ph;
         UF16x2 temp;
         bool waterLevel;
-    } readings{7, 25, false};
+    } readings{6.5, 27, false};
 
     void readPH()
     {
@@ -79,7 +91,7 @@ namespace probing
 
     void readTemp()
     {
-        readings.temp = 27;
+        readings.temp = 24;
     }
 
     bool readWaterLevel()
@@ -100,59 +112,67 @@ namespace probing
 
 namespace control
 {
-    RelayType hciRelay;
+    RelayType hclRelay(Pins::eDigitalPinHclOut);
+    RelayType heaterRelay(Pins::eDigitalPinHeaterOut, true);
+    RelayType waterRelay(Pins::eDigitalPinWaterOut);
+    bool hclOn = false;
+    bool tempOn = false;
 
-    void heaterStart()
+    void heaterControl(UF16x2 temp)
     {
-    }
-
-    void waterRelayStart()
-    {
-    }
-
-    void waterRelayStop()
-    {
-    }
-
-    void heaterStop()
-    {
-    }
-
-    void hciControll(UF16x2 pH)
-    {
-        if (pH > 7)
+        if (temp < settings.tempSettings.down || tempOn)
         {
-            hciRelay.setClockOn();
+            screen::iconsIndicator.heater = true;
+            heaterRelay.setOn();
+            tempOn = true;
+        }
+        if (temp > settings.tempSettings.down)
+        {
+            screen::iconsIndicator.heater = false;
+            heaterRelay.setOff();
+            tempOn = false;
+        }
+    }
+
+    void hclControll(UF16x2 pH)
+    {
+        if (pH > settings.phSettings.up || hclOn)
+        {
+            screen::iconsIndicator.hcl = true;
+            hclRelay.setClockOn(settings.phSettings.onTime * 1000, settings.phSettings.interval * 60000);
+            hclOn = true;
+        }
+        if (pH < settings.phSettings.down)
+        {
+            screen::iconsIndicator.hcl = false;
+            hclOn = false;
+            hclRelay.setOff();
+        }
+    }
+
+    void waterLevelControl(bool waterLevel)
+    {
+        if (waterLevel)
+        {
+            screen::iconsIndicator.refill = true;
+            waterRelay.setOn();
         }
         else
         {
-            hciRelay.setOff();
+            waterRelay.setOff();
+            screen::iconsIndicator.refill = false;
         }
     }
 
     uint32_t nextUpdateControl = 0;
-
-    void refill(bool waterLevel)
-    {
-
-        if (waterLevel)
-        {
-            screen::iconsIndicator.refill = waterLevel;
-            waterRelayStart();
-        }
-        else
-        {
-            waterRelayStop();
-        }
-    }
-
     void runLoop()
     {
         if (millis() - nextUpdateControl > 100)
         {
             nextUpdateControl = millis();
-            hciControll(probing::readings.ph);
-            refill(probing::readings.waterLevel);
+            hclControll(probing::readings.ph);
+            heaterControl(probing::readings.temp);
+            waterLevelControl(probing::readings.waterLevel);
         }
     }
 }
@@ -164,6 +184,9 @@ JoystickType joystick;
 
 void setup()
 {
+    pinMode(Pins::eDigitalPinHeaterOut, OUTPUT);
+    pinMode(Pins::eDigitalPinHclOut, OUTPUT);
+
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
@@ -175,6 +198,7 @@ void setup()
 
 void loop()
 {
+
     switch (g_currentScreen)
     {
     case eScreenMain:

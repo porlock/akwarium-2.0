@@ -10,8 +10,9 @@ namespace screen
 	struct IconsIndicatorsType
 	{
 		bool refill;
-		bool hci;
+		bool hcl;
 		bool heater;
+		bool error;
 	};
 	// extern bo użyte po za tym plikiem
 	extern IconsIndicatorsType iconsIndicator;

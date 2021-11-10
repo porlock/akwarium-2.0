@@ -51,7 +51,7 @@ namespace screen
 		};   
 
 
-    IconsIndicatorsType iconsIndicator{0, 0, 0};
+    IconsIndicatorsType iconsIndicator{0, 0, 0, 0};
 
     Adafruit_PCD8544 display = Adafruit_PCD8544(11, 10, 9, 8);
 
@@ -82,6 +82,12 @@ namespace screen
         display.setTextColor(BLACK);
         display.setTextSize(1);
 
+        if (iconsIndicator.error)
+        {
+            display.setCursor(30, 0);
+            display.print("!");
+        };
+
         if (iconsIndicator.refill)
         {
             display.setCursor(40, 0);
@@ -92,7 +98,7 @@ namespace screen
             display.setCursor(50, 0);
             display.print("G");
         };
-        if (iconsIndicator.hci)
+        if (iconsIndicator.hcl)
         {
             display.setCursor(60, 0);
             display.print("K");
