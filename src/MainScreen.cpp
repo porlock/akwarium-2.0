@@ -85,6 +85,10 @@
             case JoyStatus::eSelect:
                 setNextScreen(ScreenType::eScreenSettings);
                 break;
+            case JoyStatus::eUp:
+            case JoyStatus::eDown:
+            case JoyStatus::eCenter:
+                break;
             }
         }
     }

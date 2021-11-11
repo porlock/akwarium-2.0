@@ -139,6 +139,8 @@ void OptionsScreen::control(JoyStatus joyState)
         m_nextUpdateJoystick = millis();
         switch (joyState)
         {
+        case JoyStatus::eCenter:
+            break;    
         case JoyStatus::eLeft:
             m_screenState--;
             if (m_screenState < SettingsScreens::eSetBegin)

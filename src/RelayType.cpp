@@ -1,9 +1,7 @@
 #include <RelayType.h>
 
-RelayType::RelayType(uint8_t _outPin, bool invertedLogic = false): go(false), clock(0)
+RelayType::RelayType(uint8_t _outPin, bool invertedLogic): go(false), clock(0), outPin(_outPin),inverted(invertedLogic)
 {
-    outPin = _outPin;
-    inverted = invertedLogic;
 };
 
 void RelayType::initPin()
