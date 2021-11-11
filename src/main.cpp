@@ -14,69 +14,7 @@
 #include "OptionsScreen.h"
 #include "MainScreen.h"
 #include "PhCalibrationScreen.h"
-
-class RelayType
-{
-
-private:
-    uint32_t clock;
-    uint8_t outPin;
-    uint8_t period;
-    bool inverted;
-    bool go;
-
-public:
-    RelayType(uint8_t _outPin, bool invertedLogic = false)
-    {
-        outPin = _outPin;
-        clock = 0;
-        go = false;
-        inverted = invertedLogic;
-    };
-
-    void initPin()
-    {
-        pinMode(outPin, OUTPUT);
-    }
-
-    void setOn()
-    {
-        if (inverted)
-            digitalWrite(outPin, LOW);
-        else
-            digitalWrite(outPin, HIGH);
-    };
-
-    void setClockOn(uint32_t onTimeMilis, uint32_t intervalMilis)
-    {
-        if (millis() - clock > intervalMilis)
-        {
-            clock = millis();
-            go = true;
-        }
-
-        if (go)
-        {
-            if (millis() - clock < onTimeMilis)
-            {
-                void setOn();
-            }
-            else
-            {
-                setOff();
-                go = false;
-            }
-        }
-    };
-
-    void setOff()
-    {
-        if (inverted)
-            digitalWrite(outPin, HIGH);
-        else
-            digitalWrite(outPin, LOW);
-    }
-};
+#include "RelayType.h"
 
 namespace probing
 {
@@ -99,7 +37,7 @@ namespace probing
         readings.temp = 24;
     }
 
-    bool readWaterLevel()
+    void readWaterLevel()
     {
         readings.waterLevel = true;
     }
