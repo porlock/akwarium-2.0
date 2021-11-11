@@ -34,6 +34,11 @@ public:
         inverted = invertedLogic;
     };
 
+    void initPin()
+    {
+        pinMode(outPin, OUTPUT);
+    }
+
     void setOn()
     {
         if (inverted)
@@ -184,8 +189,10 @@ JoystickType joystick;
 
 void setup()
 {
-    pinMode(Pins::eDigitalPinHeaterOut, OUTPUT);
-    pinMode(Pins::eDigitalPinHclOut, OUTPUT);
+    control::hclRelay.initPin();
+    control::heaterRelay.initPin();
+    control::waterRelay.initPin();
+    joystick.initPin();
 
     screen::initializeScreen();
     screen::showLogo();
@@ -198,7 +205,6 @@ void setup()
 
 void loop()
 {
-
     switch (g_currentScreen)
     {
     case eScreenMain:

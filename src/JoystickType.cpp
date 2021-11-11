@@ -6,6 +6,14 @@ JoystickType::JoystickType()
     prevStatus = JoyStatus::eCenter;
 }
 
+void JoystickType::initPin()
+{
+    pinMode(Pins::eDigitalPinSoundOut, OUTPUT);
+    pinMode(Pins::eAnalogPinJoyX, INPUT);
+    pinMode(Pins::eAnalogPinJoyY, INPUT);
+    pinMode(Pins::eDigitalPinJoySelect, INPUT);
+}
+
 void JoystickType::readPins()
 {
     horizontal = analogRead(Pins::eAnalogPinJoyX);
