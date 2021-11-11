@@ -66,13 +66,14 @@ public:
 // private member declarations
 private:
 
-    bool m_displaySettingScreens;
 
+    SettingsType &m_settings;
     uint32_t m_nextUpdateRead;
     uint32_t m_nextUpdateJoystick;
     uint16_t m_screenState;
     uint16_t m_screenStatusState;
-    SettingsType &m_settings;
+    bool m_displaySettingScreens;
+    
     SettingsGradesType settingsGrades;
     SettingsLimitsType settingsLimits;
 };
