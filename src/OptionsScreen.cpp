@@ -5,9 +5,10 @@ OptionsScreen::OptionsScreen(SettingsType& _settings)
 : m_settings(_settings)
 , m_nextUpdateRead(0)
 , m_nextUpdateJoystick(0)
-, m_screenState(eSetBegin)
+, m_screenState(SettingsScreens::eSetBegin)
 , m_displaySettingScreens(true)
 {
+
 }
 
 void OptionsScreen::changeSetting(uint16_t screenState, bool add)
