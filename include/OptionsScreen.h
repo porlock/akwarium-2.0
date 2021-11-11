@@ -32,22 +32,22 @@ public:
 
     struct SettingsGradesType
     {
-        UF16x2 phGrade;
-        UF16x2 tempGrade;
-        uint16_t timeGrade;
-        uint16_t intevalGrade;
+        UF16x2 phGrade = 0.1f;
+        UF16x2 tempGrade = 0.5f;
+        uint16_t timeGrade = 1;
+        uint16_t intevalGrade = 1;
     };
 
     struct SettingsLimitsType
     {
-        UF16x2 phMax;
-        UF16x2 phMin;
-        UF16x2 tempMin;
-        UF16x2 tempMax;
-        uint16_t phIntervalMax;
-        uint16_t phIntervalMin;
-        uint16_t phTimeMax;
-        uint16_t phTimeMin;
+        UF16x2 phMax = 8;
+        UF16x2 phMin = 6;
+        UF16x2 tempMin = 20;
+        UF16x2 tempMax = 35;
+        uint16_t phIntervalMax = 60;
+        uint16_t phIntervalMin = 1;
+        uint16_t phTimeMax = 30;
+        uint16_t phTimeMin = 1;
     };
 
 // private method declarations
@@ -66,7 +66,7 @@ public:
 // private member declarations
 private:
 
-    bool displaySettingScreens;
+    bool m_displaySettingScreens;
 
     uint32_t m_nextUpdateRead;
     uint32_t m_nextUpdateJoystick;
