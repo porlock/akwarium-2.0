@@ -3,6 +3,7 @@
 #include "GlobalEnums.h"
 #include "screen.h"
 #include "ScreenManager.h"
+#include "probing.h"
 
 class MainScreen
 {

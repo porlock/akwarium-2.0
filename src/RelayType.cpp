@@ -1,8 +1,10 @@
 #include <RelayType.h>
 
-RelayType::RelayType(uint8_t _outPin, bool invertedLogic): go(false), clock(0), outPin(_outPin),inverted(invertedLogic)
-{
-};
+RelayType::RelayType(uint8_t _outPin, bool invertedLogic)
+    : go(false),
+      clock(0),
+      outPin(_outPin),
+      inverted(invertedLogic) {}
 
 void RelayType::initPin()
 {
@@ -37,7 +39,7 @@ void RelayType::setClockOn(uint32_t onTimeMilis, uint32_t intervalMilis)
             go = false;
         }
     }
-};
+}
 
 void RelayType::setOff()
 {

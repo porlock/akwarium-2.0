@@ -1,15 +1,12 @@
 #include "OptionsScreen.h"
 #include <EEPROM.h>
 
-OptionsScreen::OptionsScreen(SettingsType& _settings)
-: m_settings(_settings)
-, m_nextUpdateRead(0)
-, m_nextUpdateJoystick(0)
-, m_screenState(SettingsScreens::eSetBegin)
-, m_displaySettingScreens(true)
-{
-
-}
+OptionsScreen::OptionsScreen(SettingsType &_settings)
+    : m_settings(_settings),
+      m_nextUpdateRead(0),
+      m_nextUpdateJoystick(0),
+      m_screenState(SettingsScreens::eSetBegin),
+      m_displaySettingScreens(true) {}
 
 void OptionsScreen::changeSetting(uint16_t screenState, bool add)
 {
@@ -140,7 +137,7 @@ void OptionsScreen::control(JoyStatus joyState)
         switch (joyState)
         {
         case JoyStatus::eCenter:
-            break;    
+            break;
         case JoyStatus::eLeft:
             m_screenState--;
             if (m_screenState < SettingsScreens::eSetBegin)
@@ -189,4 +186,3 @@ void OptionsScreen::control(JoyStatus joyState)
         }
     }
 }
-

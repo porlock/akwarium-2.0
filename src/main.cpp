@@ -15,43 +15,7 @@
 #include "MainScreen.h"
 #include "PhCalibrationScreen.h"
 #include "RelayType.h"
-
-namespace probing
-{
-    uint32_t nextUpdateProbing = 0;
-
-    struct ReadingsType
-    {
-        UF16x2 ph;
-        UF16x2 temp;
-        bool waterLevel;
-    } readings{6.5, 27, false};
-
-    void readPH()
-    {
-        readings.ph = 7.30;
-    }
-
-    void readTemp()
-    {
-        readings.temp = 24;
-    }
-
-    void readWaterLevel()
-    {
-        readings.waterLevel = true;
-    }
-
-    void runLoop()
-    {
-        if (millis() - nextUpdateProbing > 100)
-        {
-            readWaterLevel();
-            readPH();
-            readTemp();
-        }
-    }
-}
+#include "probing.h"
 
 namespace control
 {
@@ -110,7 +74,7 @@ namespace control
     uint32_t nextUpdateControl = 0;
     void runLoop()
     {
-        if (millis() - nextUpdateControl > 100)
+        if (millis() - nextUpdateControl > 500)
         {
             nextUpdateControl = millis();
             hclControll(probing::readings.ph);
@@ -139,6 +103,7 @@ void setup()
     EEPROM.get(0, settings);
     screenMain.init();
     screenOptions.init();
+    //randomSeed(analogRead(22));
 }
 
 void loop()
