@@ -144,7 +144,42 @@ namespace screen
         display.display();
     }
 
-    
+    void showCalibration(CalibrationPhase phase, UF32x3 voltage, bool blink){
+	    display.clearDisplay();
+		display.setTextSize(1);
+		display.print("(");
+        display.print(phase);
+        display.print("/");
+        display.print(CalibrationPhase::eCalibrationEnd-1);
+        display.println(")");
+        switch (phase)
+        {
+            case CalibrationPhase::eCalibrationPh4Stable:
+                display.println("Stabilizacja PH=4");
+                display.print("V: ");
+		        display.print(voltage.as_float(),3);
+                break;
+            case CalibrationPhase::eCalibrationPh7Stable:
+                display.println("Stabilizacja PH=7");
+                display.print("V: ");
+		        display.print(voltage.as_float(),3);
+                break;
+            case CalibrationPhase::eCalibrationPh7Read:
+                display.println("Umiesc sonde");
+				display.println("w PH=7");
+                break;
+            case CalibrationPhase::eCalibrationPh4Read:
+                display.println("Umiesc sonde");
+				display.println("w PH=4");
+                break;
+            case CalibrationPhase::eCalibrationEnd:
+                break;
+        }
+		//display.println(" " + String(ile/5)+"%");
+		if (blink) display.println("PROSZE CZEKAC");
+		display.display();
+    }
+
     void showSettings(uint16_t minValue, uint16_t maxValue, const char *name, uint16_t value)
     {
         display.clearDisplay();

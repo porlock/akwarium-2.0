@@ -86,7 +86,7 @@ namespace control
 
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
-PhCalibrationScreen screenPhCalibraton;
+PhCalibrationScreen screenPhCalibraton(settings);
 JoystickType joystick;
 
 void setup()
@@ -120,7 +120,8 @@ void loop()
         screenOptions.render();
         break;
     case eScreenPhCalibraton:
-        screenPhCalibraton.startPhCalibration();
+        screenPhCalibraton.control(joystick.readState());
+        screenPhCalibraton.render();
         break;
     }
 

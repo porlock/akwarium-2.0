@@ -2,12 +2,19 @@
 #include <stdint.h>
 #include <ScreenManager.h>
 #include <screen.h>
+#include <GlobalEnums.h>
+#include <SettingsType.h>
 
 class PhCalibrationScreen
 {
-    uint16_t i;
+private:
+    SettingsType &m_settings;
+    uint32_t m_nextUpdateRead;
+    uint32_t m_nextUpdateJoystick;
+    CalibrationPhase currentCalibrationPhase;
 
 public:
-    void startPhCalibration();
-    PhCalibrationScreen();
+    PhCalibrationScreen(SettingsType&);
+    void render();
+    void control(JoyStatus);
 };

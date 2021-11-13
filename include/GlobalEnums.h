@@ -42,3 +42,13 @@ enum ScreenType
     eScreenSettings,
     eScreenPhCalibraton,
 };
+
+enum CalibrationPhase
+{
+    eCalibrationStart = 1,
+    eCalibrationPh7Read = eCalibrationStart,
+    eCalibrationPh7Stable = 2,
+    eCalibrationPh4Read = 3,
+    eCalibrationPh4Stable = 4,
+    eCalibrationEnd
+};

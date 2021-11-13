@@ -1,21 +1,24 @@
 #include <PhCalibrationScreen.h>
 
-PhCalibrationScreen::PhCalibrationScreen()
+PhCalibrationScreen::PhCalibrationScreen(SettingsType &_settings)
+    : m_settings(_settings),
+      currentCalibrationPhase(CalibrationPhase::eCalibrationStart) {}
+
+void PhCalibrationScreen::control(JoyStatus joyState)
 {
-    i = 0;
+    if (millis() - m_nextUpdateJoystick > 100)
+    {
+        m_nextUpdateJoystick = millis();
+        if (joyState == JoyStatus::eSelect)
+            setNextScreen(ScreenType::eScreenSettings);
+    }
 }
 
-void PhCalibrationScreen::startPhCalibration()
+void PhCalibrationScreen::render()
 {
-
-    if (i < 10)
+    if (millis() - m_nextUpdateRead > 500)
     {
-        screen::showClickOption("Umiesc sade w ph4", 1, 500);
-        i++;
-    }
-    else
-    {
-        i = 0;
-        setNextScreen(ScreenType::eScreenMain);
+        m_nextUpdateRead = millis();
+        screen::showCalibration(currentCalibrationPhase);
     }
 }

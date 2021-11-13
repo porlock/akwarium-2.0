@@ -4,6 +4,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include "FixedPoint.h"
+#include "GlobalEnums.h"
 
 namespace screen
 {
@@ -24,5 +25,6 @@ namespace screen
 	void showSettings(UF16x2, UF16x2, const char *, UF16x2);
 	void showSettings(uint16_t, uint16_t, const char *, uint16_t);
 	void showClickOption(const char *, uint16_t = 1, uint16_t = 0);
+	void showCalibration(CalibrationPhase phase, UF32x3 voltage = 0, bool blink = false);
 	void showSave();
 }
