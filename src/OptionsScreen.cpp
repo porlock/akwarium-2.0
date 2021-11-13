@@ -1,15 +1,12 @@
 #include "OptionsScreen.h"
 #include <EEPROM.h>
 
-OptionsScreen::OptionsScreen(SettingsType& _settings) : m_settings(_settings)
-{
-    displaySettingScreens=true;
-    m_nextUpdateRead=0;
-    m_nextUpdateJoystick=0;
-    m_screenState = SettingsScreens::eSetBegin;
-    settingsGrades={0.1f,0.5f,1,1};
-    settingsLimits={8,6,20,35,60,1,30,1};    
-}
+OptionsScreen::OptionsScreen(SettingsType &_settings)
+    : m_settings(_settings),
+      m_nextUpdateRead(0),
+      m_nextUpdateJoystick(0),
+      m_screenState(SettingsScreens::eSetBegin),
+      m_displaySettingScreens(true) {}
 
 void OptionsScreen::changeSetting(uint16_t screenState, bool add)
 {
@@ -84,7 +81,7 @@ void OptionsScreen::init()
 
 void OptionsScreen::render()
 {
-    if (displaySettingScreens)
+    if (m_displaySettingScreens)
     {
         switch (m_screenState)
         {
@@ -127,7 +124,7 @@ void OptionsScreen::render()
         case SettingsStatusScreens::eOptionsDefault:
             screen::showClickOption("Przywrocono", 1, 1500);
         }
-        displaySettingScreens = true;
+        m_displaySettingScreens = true;
     }
 }
 
@@ -139,6 +136,8 @@ void OptionsScreen::control(JoyStatus joyState)
         m_nextUpdateJoystick = millis();
         switch (joyState)
         {
+        case JoyStatus::eCenter:
+            break;
         case JoyStatus::eLeft:
             m_screenState--;
             if (m_screenState < SettingsScreens::eSetBegin)
@@ -166,7 +165,7 @@ void OptionsScreen::control(JoyStatus joyState)
                 m_screenStatusState = SettingsStatusScreens::eOptionsSave;
                 m_screenState = SettingsScreens::eSetBegin;
                 EEPROM.put(0, settings);
-                displaySettingScreens = false;
+                m_displaySettingScreens = false;
                 break;
             case SettingsScreens::eSetDefaults:
                 m_screenStatusState = SettingsStatusScreens::eOptionsDefault;
@@ -174,7 +173,7 @@ void OptionsScreen::control(JoyStatus joyState)
                 //defreferencja, zapisanie w miesjscu na ktore wskasuje wkaźnik
                 //*settingsPointer = SettingsType();
                 m_settings = defaultSettings;
-                displaySettingScreens = false;
+                m_displaySettingScreens = false;
                 break;
             case SettingsScreens::eSetPhCalibration:
                 setNextScreen(ScreenType::eScreenPhCalibraton);
@@ -187,4 +186,3 @@ void OptionsScreen::control(JoyStatus joyState)
         }
     }
 }
-

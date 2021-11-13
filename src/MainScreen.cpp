@@ -20,10 +20,10 @@
             switch (m_screenState)
             {
             case ReadScreens::eScreenReadTemp:
-                screen::showReadings(m_currentBarPosition, "Temp", 27.5);
+                screen::showReadings(m_currentBarPosition, "Temp", probing::readings.temp);
                 break;
             case ReadScreens::eScreenReadPh:
-                screen::showReadings(m_currentBarPosition, "Ph", 7.5);
+                screen::showReadings(m_currentBarPosition, "Ph", probing::readings.ph);
                 break;
             case ReadScreens::eScreenReadCorousel:
                 if (skip)
@@ -38,10 +38,10 @@
                 switch (m_readType)
                 {
                 case 'P':
-                    screen::showReadings(m_currentBarPosition, "Ph", m_currentBarPosition, true);
+                    screen::showReadings(m_currentBarPosition, "Ph", probing::readings.ph, true);
                     break;
                 case 'T':
-                    screen::showReadings(m_currentBarPosition, "Temp", m_currentBarPosition, true);
+                    screen::showReadings(m_currentBarPosition, "Temp", probing::readings.temp, true);
                     break;
                 }
                 if (m_currentBarPosition == 0)
@@ -84,6 +84,10 @@
                 break;
             case JoyStatus::eSelect:
                 setNextScreen(ScreenType::eScreenSettings);
+                break;
+            case JoyStatus::eUp:
+            case JoyStatus::eDown:
+            case JoyStatus::eCenter:
                 break;
             }
         }

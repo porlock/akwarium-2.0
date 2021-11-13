@@ -14,97 +14,72 @@
 #include "OptionsScreen.h"
 #include "MainScreen.h"
 #include "PhCalibrationScreen.h"
-
-
-namespace probing
-{
-    uint32_t nextUpdateProbing = 0;
-
-    struct ReadingsType
-    {
-        UF16x2 ph;
-        UF16x2 temp;
-        bool waterLevel;
-    } readings{7, 25, false};
-
-    UF16x2 readPH()
-    {
-       readings.ph = 7.30;
-    }
-
-    UF16x2 readTemp()
-    {
-        readings.temp = 27;
-    }
-
-    bool readWaterLevel()
-    {
-        readings.waterLevel = true;
-    }
-
-    void runProbbingLoop()
-    {
-        if (millis() - nextUpdateProbing > 100)
-        {
-            readWaterLevel();
-            readPH();
-            readTemp();
-        }
-    }
-}
+#include "RelayType.h"
+#include "probing.h"
 
 namespace control
 {
-    void heaterStart(){
+    RelayType hclRelay(Pins::eDigitalPinHclOut);
+    RelayType heaterRelay(Pins::eDigitalPinHeaterOut, true);
+    RelayType waterRelay(Pins::eDigitalPinWaterOut);
+    bool hclOn = false;
+    bool tempOn = false;
 
-    }
-
-    void waterRelayStart()
+    void heaterControl(UF16x2 temp)
     {
-
+        if (temp < settings.tempSettings.down || tempOn)
+        {
+            screen::iconsIndicator.heater = true;
+            heaterRelay.setOn();
+            tempOn = true;
+        }
+        if (temp > settings.tempSettings.down)
+        {
+            screen::iconsIndicator.heater = false;
+            heaterRelay.setOff();
+            tempOn = false;
+        }
     }
 
-    void waterRelayStop()
+    void hclControll(UF16x2 pH)
     {
-        
+        if (pH > settings.phSettings.up || hclOn)
+        {
+            screen::iconsIndicator.hcl = true;
+            hclRelay.setClockOn(settings.phSettings.onTime * 1000, settings.phSettings.interval * 60000);
+            hclOn = true;
+        }
+        if (pH < settings.phSettings.down)
+        {
+            screen::iconsIndicator.hcl = false;
+            hclOn = false;
+            hclRelay.setOff();
+        }
     }
 
-
-    void heaterStop(){
-
-    }
-
-    void hciControll()
+    void waterLevelControl(bool waterLevel)
     {
-
-    }
-
-
-    uint32_t nextUpdateControl = 0;
-
-    void refill(bool waterLevel)
-    {
-        
         if (waterLevel)
         {
-            screen::iconsIndicator.refill = waterLevel;
-            waterRelayStart();
+            screen::iconsIndicator.refill = true;
+            waterRelay.setOn();
         }
-        else 
+        else
         {
-            waterRelayStop();
+            waterRelay.setOff();
+            screen::iconsIndicator.refill = false;
         }
     }
 
+    uint32_t nextUpdateControl = 0;
     void runLoop()
     {
-        if (millis() - nextUpdateControl > 100)
+        if (millis() - nextUpdateControl > 500)
         {
             nextUpdateControl = millis();
-            /*UF16x2 temperature = probing::readTemp();
-            UF16x2 ph = probing::readPH();
-            */
-            refill(probing::readings.waterLevel);
+            hclControll(probing::readings.ph);
+            heaterControl(probing::readings.temp);
+            waterLevelControl(probing::readings.waterLevel);
         }
     }
 }
@@ -112,24 +87,27 @@ namespace control
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
 PhCalibrationScreen screenPhCalibraton;
-
 JoystickType joystick;
 
 void setup()
 {
+    control::hclRelay.initPin();
+    control::heaterRelay.initPin();
+    control::waterRelay.initPin();
+    joystick.initPin();
+
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
     Serial.println("Program Start");
     EEPROM.get(0, settings);
-
     screenMain.init();
     screenOptions.init();
+    //randomSeed(analogRead(22));
 }
 
 void loop()
 {
-    Serial.println(g_currentScreen);
     switch (g_currentScreen)
     {
     case eScreenMain:
@@ -148,8 +126,8 @@ void loop()
 
     if (g_currentScreen != eScreenSettings)
     {
+        probing::runLoop();
         control::runLoop();
-        probing::runProbbingLoop();
     }
 
     if (g_currentScreen != g_nextScreen)

@@ -12,5 +12,6 @@ private:
 
 public:
     JoyStatus readState();
+    void initPin();
     JoystickType();
 };
