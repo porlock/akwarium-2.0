@@ -95,12 +95,16 @@ void setup()
     control::heaterRelay.initPin();
     control::waterRelay.initPin();
     joystick.initPin();
-
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
     Serial.println("Program Start");
     EEPROM.get(0, settings);
+    if (settings.eepromCheck != defaultSettings.eepromCheck)
+    {
+           screen::showMemmoryError();
+           settings=defaultSettings;
+    }
     screenMain.init();
     screenOptions.init();
     //randomSeed(analogRead(22));

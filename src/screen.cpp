@@ -205,6 +205,19 @@ namespace screen
         delay(pause);
     }
 
+    void showMemmoryError()
+    {
+        display.clearDisplay();
+        display.setTextSize(2);
+        display.println("BLAD");
+        display.setTextSize(1);
+        display.println();
+        display.println("odczytu");        
+        display.println("z pamieci");
+        display.display();
+        delay(10000);
+    }
+
     void showSave()
     {
         display.clearDisplay();

@@ -28,6 +28,8 @@ struct SettingsType
     {
         uint16_t barLenght = 15;
     } screenSettings;
+
+    uint32_t eepromCheck = 3768890503;
 };
 
 extern SettingsType defaultSettings;
