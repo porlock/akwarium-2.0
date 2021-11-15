@@ -19,9 +19,9 @@ struct SettingsType
 
     struct PhCalibrationSettingsType
     {
-        UF16x2 ph7V = 0.0f;
-        UF16x2 ph4V = 0.0f;
-        UF16x2 phFactor = 0.0f;
+        UF16x2 ph7V = 2.5f;
+        UF16x2 ph4V = 2.95f;
+        UF16x2 phFactor = 0.15f;
     } phCalibrationSettings;
 
     struct ScreenSettingsType

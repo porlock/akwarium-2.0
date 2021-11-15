@@ -1,6 +1,9 @@
 #pragma once
 #include <Arduino.h>
 #include "FixedPoint.h"
+#include "SMA.h"
+#include "GlobalEnums.h"
+#include "SettingsType.h"
 
 namespace probing
 {
@@ -20,5 +23,5 @@ namespace probing
 
     void runLoop();
 
-    uint16_t readV( uint16_t delay=50, uint16_t loops=30);
+    UF16x3 readV( uint16_t delay=5, uint16_t loops=10);
 }

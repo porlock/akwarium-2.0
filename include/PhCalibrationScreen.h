@@ -1,11 +1,11 @@
 #pragma once
-#include <stdint.h>
+#include <Arduino.h>
 #include <ScreenManager.h>
 #include <screen.h>
 #include <GlobalEnums.h>
 #include <SettingsType.h>
 #include <probing.h>
-#include "QuickStats.h"
+
 
 class PhCalibrationScreen
 {
@@ -15,8 +15,8 @@ private:
     uint32_t m_nextUpdateJoystick;
     CalibrationPhase currentCalibrationPhase;
     uint16_t m_constLoopsCounter;
-    uint16_t voltage;
-    uint16_t voltagePrev;
+    UF16x3 voltage;
+    UF16x3 voltagePrev;
     bool isConstant(uint16_t loops = 500);
 
 public:

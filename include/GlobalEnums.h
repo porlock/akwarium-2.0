@@ -10,7 +10,8 @@ enum Pins : uint16_t
     eDigitalPinHeaterOut = 3,
     eDigitalPinWaterOut = 5,
     eAnalogPinJoyX = 0,
-    eAnalogPinJoyY = 1
+    eAnalogPinJoyY = 1,
+    eAnalogPinPH = 6
 
 };
 

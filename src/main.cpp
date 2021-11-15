@@ -16,6 +16,7 @@
 #include "PhCalibrationScreen.h"
 #include "RelayType.h"
 #include "probing.h"
+#include "SMA.h"
 
 namespace control
 {
@@ -102,8 +103,8 @@ void setup()
     EEPROM.get(0, settings);
     if (settings.eepromCheck != defaultSettings.eepromCheck)
     {
-           screen::showMemmoryError();
-           settings=defaultSettings;
+        screen::showMemmoryError();
+        settings = defaultSettings;
     }
     screenMain.init();
     screenOptions.init();
