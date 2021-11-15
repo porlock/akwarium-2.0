@@ -4,7 +4,6 @@
 
 namespace probing
 {
-
     struct ReadingsType
     {
         UF16x2 ph;
@@ -20,4 +19,6 @@ namespace probing
     void readWaterLevel();
 
     void runLoop();
+
+    uint16_t readV( uint16_t delay=50, uint16_t loops=30);
 }

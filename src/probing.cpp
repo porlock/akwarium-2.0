@@ -8,6 +8,12 @@ namespace probing
 
     bool add = true;
 
+
+    uint16_t readV( uint16_t delay, uint16_t loops)
+    {
+        return 3;
+    }
+
     void readPH()
     {
 
