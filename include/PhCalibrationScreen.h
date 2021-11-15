@@ -13,11 +13,12 @@ private:
     SettingsType &m_settings;
     uint32_t m_nextUpdateRead;
     uint32_t m_nextUpdateJoystick;
-    CalibrationPhase currentCalibrationPhase;
+    CalibrationPhase m_currentCalibrationPhase;
     uint16_t m_constLoopsCounter;
-    UF16x3 voltage;
-    UF16x3 voltagePrev;
+    UF16x2 m_voltage;
+    UF16x2 m_voltagePrev;
     bool isConstant(uint16_t loops = 500);
+    bool m_blink;
 
 public:
     PhCalibrationScreen(SettingsType &);

@@ -2,10 +2,11 @@
 
 PhCalibrationScreen::PhCalibrationScreen(SettingsType &_settings)
     : m_settings(_settings),
-      currentCalibrationPhase(CalibrationPhase::eCalibrationStart),
+      m_currentCalibrationPhase(CalibrationPhase::eCalibrationStart),
       m_constLoopsCounter(0),
-      voltage(0),
-      voltagePrev(0) {}
+      m_voltage(0),
+      m_voltagePrev(0),
+      m_blink(false) {}
 
 void PhCalibrationScreen::control(JoyStatus joyState)
 {
@@ -16,51 +17,54 @@ void PhCalibrationScreen::control(JoyStatus joyState)
             setNextScreen(ScreenType::eScreenSettings);
         else
         {
-            voltage = probing::readV();
-
-            if (currentCalibrationPhase == CalibrationPhase::eCalibrationPh7Read && (voltage < 3.1) && (voltage > 2.9))
+            probing::readPH();
+            m_voltage = probing::readings.phVoltage;
+            m_blink = false;
+            
+            if (m_currentCalibrationPhase == CalibrationPhase::eCalibrationPh7Read && (m_voltage < 3.1) && (m_voltage > 2.9))
             {
-                currentCalibrationPhase = CalibrationPhase::eCalibrationPh7Stable;
+                m_currentCalibrationPhase = CalibrationPhase::eCalibrationPh7Stable;
+                m_blink = !m_blink;
                 m_constLoopsCounter = 0;
             }
-            else if (currentCalibrationPhase == CalibrationPhase::eCalibrationPh7Stable && isConstant())
+            else if (m_currentCalibrationPhase == CalibrationPhase::eCalibrationPh7Stable && isConstant())
             {
-                currentCalibrationPhase = CalibrationPhase::eCalibrationPh4Read;
-                m_settings.phCalibrationSettings.ph7V = voltage.as_float();
+                m_currentCalibrationPhase = CalibrationPhase::eCalibrationPh4Read;
+                m_settings.phCalibrationSettings.ph7V = m_voltage;
+                m_blink = false;
             }
-            else if (currentCalibrationPhase == CalibrationPhase::eCalibrationPh4Read && (voltage < 3.50) and (voltage > 3.30))
+            else if (m_currentCalibrationPhase == CalibrationPhase::eCalibrationPh4Read && (m_voltage < 3.50) and (m_voltage > 3.30))
             {
-                currentCalibrationPhase = CalibrationPhase::eCalibrationPh7Stable;
+                m_currentCalibrationPhase = CalibrationPhase::eCalibrationPh7Stable;
                 m_constLoopsCounter = 0;
+                m_blink = !m_blink;
             }
-            else if (currentCalibrationPhase == CalibrationPhase::eCalibrationPh4Stable && isConstant())
+            else if (m_currentCalibrationPhase == CalibrationPhase::eCalibrationPh4Stable && isConstant())
             {
-                    /*   
-                    if (voltage >= voltagePrev)
-                        absVotage = voltage - voltagePrev;
-                    else
-                        absVotage = voltagePrev - voltage;
-                    */
-                //m_settings.phCalibrationSettings.phFactor=
-                //float tmp_wspph=(abs(ph7-ph4))/3.0;
-                currentCalibrationPhase = CalibrationPhase::eCalibrationEnd;
-            }
+                UF16x2 absVotage;
+                if (m_settings.phCalibrationSettings.ph7V >= m_voltage)
+                    absVotage = m_settings.phCalibrationSettings.ph7V - m_voltage;
+                else
+                    absVotage = m_voltage - m_settings.phCalibrationSettings.ph7V;
 
-            //Serial.println(voltage.as_float(),3);
+                m_settings.phCalibrationSettings.phFactor = absVotage / 3.0f;
+                m_blink = false;
+                setNextScreen(ScreenType::eScreenSettings);
+            }
         }
     }
 }
 
 bool PhCalibrationScreen::isConstant(uint16_t loops)
 {
-    UF16x3 absVotage;
+    UF16x2 absVotage;
 
-    if (voltage >= voltagePrev)
-        absVotage = voltage - voltagePrev;
+    if (m_voltage >= m_voltagePrev)
+        absVotage = m_voltage - m_voltagePrev;
     else
-        absVotage = voltagePrev - voltage;
+        absVotage = m_voltagePrev - m_voltage;
 
-    if (absVotage < 0.01f)
+    if (absVotage <= 0.01f)
     {
         if (m_constLoopsCounter >= loops)
         {
@@ -69,7 +73,10 @@ bool PhCalibrationScreen::isConstant(uint16_t loops)
         m_constLoopsCounter++;
     }
     else
+    {
+        m_voltagePrev = m_voltage;
         m_constLoopsCounter = 0;
+    }
     return false;
 }
 
@@ -78,9 +85,6 @@ void PhCalibrationScreen::render()
     if (millis() - m_nextUpdateRead > 500)
     {
         m_nextUpdateRead = millis();
-        if (currentCalibrationPhase == CalibrationPhase::eCalibrationEnd)
-            screen::showSave();
-        else
-            screen::showCalibration(currentCalibrationPhase);
+        screen::showCalibration(m_currentCalibrationPhase, m_voltage, m_blink);
     }
 }

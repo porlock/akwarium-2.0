@@ -2,15 +2,16 @@
 
 namespace probing
 {
-    
+
     uint32_t nextUpdateProbing = 0;
-    ReadingsType readings{6.5, 27, false};
+    ReadingsType readings{6.5, 27, 0, false};
 
     bool add = true;
 
-    SMA<30> phFilter;
+    SMA<20> voltageAnalogFilter;
 
-    UF16x3 readV(uint16_t pause, uint16_t loops)
+    /*
+    UF16x2 readV(uint16_t pause, uint16_t loops)
     {
         SMA<30> filter;
         uint32_t analogRead;
@@ -20,16 +21,14 @@ namespace probing
             delay(pause);
         }
         return (5.0f / 1024.0f) * analogRead;
-    }
+    }*/
 
     void readPH()
     {
 
-        uint32_t analogRead = phFilter(Pins::eAnalogPinPH);
-        UF16x2 voltage = (5.0f / 1024.0f) * analogRead;
-        readings.ph = (UF16x2)7.0f + (( settings.phCalibrationSettings.ph7V - voltage ) / settings.phCalibrationSettings.phFactor);
-
-        //float tmp_readph = 7.0 + ((u_odczyt.ph7 - readmv) / u_odczyt.wspph);
+        uint32_t analogRead = voltageAnalogFilter(Pins::eAnalogPinPH);
+        readings.phVoltage = (5.0f / 1024.0f) * analogRead;
+        readings.ph = (UF16x2)7.0f + ((settings.phCalibrationSettings.ph7V - readings.phVoltage) / settings.phCalibrationSettings.phFactor);
 
         /*
         if (readings.ph < 7.5 && add)

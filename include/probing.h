@@ -11,6 +11,7 @@ namespace probing
     {
         UF16x2 ph;
         UF16x2 temp;
+        UF16x2 phVoltage;
         bool waterLevel;
     };
     extern ReadingsType readings;
@@ -23,5 +24,5 @@ namespace probing
 
     void runLoop();
 
-    UF16x3 readV( uint16_t delay=5, uint16_t loops=10);
+    UF16x2 readV( uint16_t delay=5, uint16_t loops=10);
 }

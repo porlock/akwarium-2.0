@@ -144,7 +144,22 @@ namespace screen
         display.display();
     }
 
-    void showCalibration(CalibrationPhase phase, UF32x3 voltage, bool blink){
+    void showCalibrationInfo(UF16x2 ph7V, UF16x2 ph4V, UF16x2 phFactor) 
+    {
+        display.clearDisplay();
+        display.setTextSize(1);
+        display.println("Kalibracja PH");
+        display.println();
+        display.print("ph7V: ");
+        display.println(ph7V.as_float());
+        display.print("ph4V: ");
+        display.println(ph4V.as_float());
+        display.print("phFactor: ");
+        display.println(phFactor.as_float());
+        display.display();
+    }
+
+    void showCalibration(CalibrationPhase phase, UF16x2 voltage, bool blink){
 	    display.clearDisplay();
 		display.setTextSize(1);
 		display.print("(");
@@ -175,6 +190,7 @@ namespace screen
             case CalibrationPhase::eCalibrationEnd:
                 break;
         }
+        display.println();
 		//display.println(" " + String(ile/5)+"%");
 		if (blink) display.println("PROSZE CZEKAC");
 		display.display();
