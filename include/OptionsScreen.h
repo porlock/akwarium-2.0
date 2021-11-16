@@ -1,0 +1,79 @@
+#pragma once
+#include "SettingsType.h"
+#include "GlobalEnums.h"
+#include "screen.h"
+#include "ScreenManager.h"
+
+class OptionsScreen
+{
+// public type declarations
+public:
+
+    enum SettingsScreens : uint16_t
+    {
+        eSetBegin = 1,
+        eSetTempDown = eSetBegin,
+        eSetTempUp = 2,
+        eSetPhDown = 3,
+        eSetPhUp = 4,
+        eSetPhTime = 5,
+        eSetPhPeriod = 6,
+        eSetSave = 7,
+        eSetDefaults = 8,
+        eSetPhCalibration = 9,
+        eSetEnd
+    };
+
+    enum SettingsStatusScreens : uint16_t
+    {
+        eOptionsSave,
+        eOptionsDefault
+    };
+
+    struct SettingsGradesType
+    {
+        UF16x2 phGrade = 0.1f;
+        UF16x2 tempGrade = 0.5f;
+        uint16_t timeGrade = 1;
+        uint16_t intevalGrade = 1;
+    };
+
+    struct SettingsLimitsType
+    {
+        UF16x2 phMax = 8;
+        UF16x2 phMin = 6;
+        UF16x2 tempMin = 20;
+        UF16x2 tempMax = 35;
+        uint16_t phIntervalMax = 60;
+        uint16_t phIntervalMin = 1;
+        uint16_t phTimeMax = 30;
+        uint16_t phTimeMin = 1;
+    };
+
+// private method declarations
+private:
+
+    void changeSetting(uint16_t , bool  = true);
+ 
+// public method declarations
+public:
+
+    OptionsScreen(SettingsType&);
+    void init();
+    void render();
+    void control(JoyStatus);
+
+// private member declarations
+private:
+
+
+    SettingsType &m_settings;
+    uint32_t m_nextUpdateRead;
+    uint32_t m_nextUpdateJoystick;
+    uint16_t m_screenState;
+    uint16_t m_screenStatusState;
+    bool m_displaySettingScreens;
+    
+    SettingsGradesType settingsGrades;
+    SettingsLimitsType settingsLimits;
+};
