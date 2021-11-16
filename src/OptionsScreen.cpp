@@ -81,50 +81,54 @@ void OptionsScreen::init()
 
 void OptionsScreen::render()
 {
-    if (m_displaySettingScreens)
+    if (millis() - m_nextUpdateRead > 500)
     {
-        switch (m_screenState)
+        m_nextUpdateRead = millis();
+        if (m_displaySettingScreens)
         {
-        case SettingsScreens::eSetTempUp:
-            screen::showSettings(max(settingsLimits.tempMin, m_settings.tempSettings.down), settingsLimits.tempMax, "Gor temp (C):", m_settings.tempSettings.up);
-            break;
-        case SettingsScreens::eSetTempDown:
-            screen::showSettings(settingsLimits.tempMin, settingsLimits.tempMax, "Dol temp (C):", m_settings.tempSettings.down);
-            break;
-        case SettingsScreens::eSetPhUp:
-            screen::showSettings(settingsLimits.phMin, settingsLimits.phMax, "Gor ph:", m_settings.phSettings.up);
-            break;
-        case SettingsScreens::eSetPhDown:
-            screen::showSettings(settingsLimits.phMin, settingsLimits.phMax, "Dol ph:", m_settings.phSettings.down);
-            break;
-        case SettingsScreens::eSetPhTime:
-            screen::showSettings(settingsLimits.phTimeMin, settingsLimits.phTimeMax, "Czas ph (s):", m_settings.phSettings.onTime);
-            break;
-        case SettingsScreens::eSetPhPeriod:
-            screen::showSettings(settingsLimits.phIntervalMin, settingsLimits.phIntervalMax, "Okres ph (m):", m_settings.phSettings.interval);
-            break;
-        case SettingsScreens::eSetSave:
-            screen::showClickOption("Zapis ustawien");
-            break;
-        case SettingsScreens::eSetDefaults:
-            screen::showClickOption("Reset ustawien");
-            break;
-        case SettingsScreens::eSetPhCalibration:
-            screen::showClickOption("Kalibracja PH");
-            break;
+            switch (m_screenState)
+            {
+            case SettingsScreens::eSetTempUp:
+                screen::showSettings(max(settingsLimits.tempMin, m_settings.tempSettings.down), settingsLimits.tempMax, "Gor temp (C):", m_settings.tempSettings.up);
+                break;
+            case SettingsScreens::eSetTempDown:
+                screen::showSettings(settingsLimits.tempMin, settingsLimits.tempMax, "Dol temp (C):", m_settings.tempSettings.down);
+                break;
+            case SettingsScreens::eSetPhUp:
+                screen::showSettings(settingsLimits.phMin, settingsLimits.phMax, "Gor ph:", m_settings.phSettings.up);
+                break;
+            case SettingsScreens::eSetPhDown:
+                screen::showSettings(settingsLimits.phMin, settingsLimits.phMax, "Dol ph:", m_settings.phSettings.down);
+                break;
+            case SettingsScreens::eSetPhTime:
+                screen::showSettings(settingsLimits.phTimeMin, settingsLimits.phTimeMax, "Czas ph (s):", m_settings.phSettings.onTime);
+                break;
+            case SettingsScreens::eSetPhPeriod:
+                screen::showSettings(settingsLimits.phIntervalMin, settingsLimits.phIntervalMax, "Okres ph (m):", m_settings.phSettings.interval);
+                break;
+            case SettingsScreens::eSetSave:
+                screen::showClickOption("Zapis ustawien");
+                break;
+            case SettingsScreens::eSetDefaults:
+                screen::showClickOption("Reset ustawien");
+                break;
+            case SettingsScreens::eSetPhCalibration:
+                screen::showCalibrationInfo(m_settings.phCalibrationSettings.ph7V,m_settings.phCalibrationSettings.ph4V,m_settings.phCalibrationSettings.phFactor);
+                break;
+            }
         }
-    }
-    else
-    {
-        switch (m_screenStatusState)
+        else
         {
-        case SettingsStatusScreens::eOptionsSave:
-            screen::showClickOption("Zapisane", 1, 1500);
-            break;
-        case SettingsStatusScreens::eOptionsDefault:
-            screen::showClickOption("Przywrocono", 1, 1500);
+            switch (m_screenStatusState)
+            {
+            case SettingsStatusScreens::eOptionsSave:
+                screen::showClickOption("Zapisane", 1, 1500);
+                break;
+            case SettingsStatusScreens::eOptionsDefault:
+                screen::showClickOption("Przywrocono", 1, 1500);
+            }
+            m_displaySettingScreens = true;
         }
-        m_displaySettingScreens = true;
     }
 }
 

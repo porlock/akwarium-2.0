@@ -16,6 +16,7 @@
 #include "PhCalibrationScreen.h"
 #include "RelayType.h"
 #include "probing.h"
+#include "SMA.h"
 
 namespace control
 {
@@ -86,7 +87,7 @@ namespace control
 
 MainScreen screenMain(settings);
 OptionsScreen screenOptions(settings);
-PhCalibrationScreen screenPhCalibraton;
+PhCalibrationScreen screenPhCalibraton(settings);
 JoystickType joystick;
 
 void setup()
@@ -95,12 +96,16 @@ void setup()
     control::heaterRelay.initPin();
     control::waterRelay.initPin();
     joystick.initPin();
-
     screen::initializeScreen();
     screen::showLogo();
     Serial.begin(9600);
     Serial.println("Program Start");
     EEPROM.get(0, settings);
+    if (settings.eepromCheck != defaultSettings.eepromCheck)
+    {
+        screen::showMemmoryError();
+        settings = defaultSettings;
+    }
     screenMain.init();
     screenOptions.init();
     //randomSeed(analogRead(22));
@@ -120,7 +125,8 @@ void loop()
         screenOptions.render();
         break;
     case eScreenPhCalibraton:
-        screenPhCalibraton.startPhCalibration();
+        screenPhCalibraton.control(joystick.readState());
+        screenPhCalibraton.render();
         break;
     }
 

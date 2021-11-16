@@ -10,7 +10,8 @@ enum Pins : uint16_t
     eDigitalPinHeaterOut = 3,
     eDigitalPinWaterOut = 5,
     eAnalogPinJoyX = 0,
-    eAnalogPinJoyY = 1
+    eAnalogPinJoyY = 1,
+    eAnalogPinPH = 6
 
 };
 
@@ -41,4 +42,14 @@ enum ScreenType
     eScreenMain,
     eScreenSettings,
     eScreenPhCalibraton,
+};
+
+enum CalibrationPhase
+{
+    eCalibrationStart = 1,
+    eCalibrationPh7Read = eCalibrationStart,
+    eCalibrationPh7Stable = 2,
+    eCalibrationPh4Read = 3,
+    eCalibrationPh4Stable = 4,
+    eCalibrationEnd
 };

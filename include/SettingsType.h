@@ -19,15 +19,17 @@ struct SettingsType
 
     struct PhCalibrationSettingsType
     {
-        UF16x2 ph7mV = 0.0f;
-        UF16x2 ph4mV = 0.0f;
-        UF16x2 phFactor = 0.0f;
+        UF16x2 ph7V = 2.5f;
+        UF16x2 ph4V = 2.95f;
+        UF16x2 phFactor = 0.15f;
     } phCalibrationSettings;
 
     struct ScreenSettingsType
     {
         uint16_t barLenght = 15;
     } screenSettings;
+
+    uint32_t eepromCheck = 3768890503;
 };
 
 extern SettingsType defaultSettings;
