@@ -4,6 +4,9 @@
 #include "SMA.h"
 #include "GlobalEnums.h"
 #include "SettingsType.h"
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include "screen.h"
 
 namespace probing
 {
@@ -23,6 +26,8 @@ namespace probing
     void readWaterLevel();
 
     void runLoop();
+
+    void initTemperatureSensor();
 
     UF16x2 readV( uint16_t delay=5, uint16_t loops=10);
 }
