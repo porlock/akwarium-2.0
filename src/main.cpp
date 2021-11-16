@@ -108,7 +108,7 @@ void setup()
     }
     screenMain.init();
     screenOptions.init();
-    //randomSeed(analogRead(22));
+    probing::initTemperatureSensor();
 }
 
 void loop()
