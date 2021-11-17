@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include <Adafruit_I2CDevice.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include "FixedPoint.h"
