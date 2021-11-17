@@ -3,6 +3,7 @@
 #include "GlobalEnums.h"
 #include "screen.h"
 #include "ScreenManager.h"
+#include <EEPROM.h>
 
 class OptionsScreen
 {
