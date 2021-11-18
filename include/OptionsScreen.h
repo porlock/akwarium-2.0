@@ -33,18 +33,18 @@ public:
 
     struct SettingsGradesType
     {
-        UF16x2 phGrade = 0.1f;
-        UF16x2 tempGrade = 0.5f;
+        F16x3 phGrade = 0.1f;
+        F16x3 tempGrade = 0.5f;
         uint16_t timeGrade = 1;
         uint16_t intevalGrade = 1;
     };
 
     struct SettingsLimitsType
     {
-        UF16x2 phMax = 8;
-        UF16x2 phMin = 6;
-        UF16x2 tempMin = 20;
-        UF16x2 tempMax = 35;
+        F16x3 phMax = 8;
+        F16x3 phMin = 6;
+        F16x3 tempMin = 20;
+        F16x3 tempMax = 35;
         uint16_t phIntervalMax = 60;
         uint16_t phIntervalMin = 1;
         uint16_t phTimeMax = 30;

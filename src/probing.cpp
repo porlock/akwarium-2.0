@@ -29,7 +29,7 @@ namespace probing
     }
 
     /*
-    UF16x2 readV(uint16_t pause, uint16_t loops)
+    F16x3 readV(uint16_t pause, uint16_t loops)
     {
         SMA<30> filter;
         uint32_t analogRead;
@@ -43,10 +43,13 @@ namespace probing
 
     void readPH()
     {
-
-        uint32_t analogRead = voltageAnalogFilter(Pins::eAnalogPinPH);
-        readings.phVoltage = (5.0f / 1024.0f) * analogRead;
-        readings.ph = (UF16x2)7.0f + ((settings.phCalibrationSettings.ph7V - readings.phVoltage) / settings.phCalibrationSettings.phFactor);
+        uint16_t filteredRead = voltageAnalogFilter(analogRead(Pins::eAnalogPinPH));
+        Serial.print("analog raw:  ");
+        Serial.println(analogRead(Pins::eAnalogPinPH));
+        readings.phVoltage = (5.0f / 1024.0f) * filteredRead;
+        Serial.print("V filtered: ");
+        Serial.println(readings.phVoltage.as_float() );
+        readings.ph = 7.0f + ((settings.phCalibrationSettings.ph7V - readings.phVoltage).as_float() / settings.phCalibrationSettings.phFactor.as_float());
     }
 
     void readTemp()

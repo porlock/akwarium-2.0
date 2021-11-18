@@ -76,7 +76,7 @@ namespace screen
         clearScreen();
     }
 
-    void showReadings(uint16_t bottomBarLenght, const char *name, UF16x2 value, bool showRefreshIcon)
+    void showReadings(uint16_t bottomBarLenght, const char *name, F16x3 value, bool showRefreshIcon)
     {
         display.clearDisplay();
         display.setTextColor(BLACK);
@@ -129,7 +129,7 @@ namespace screen
         display.display();
     }
 
-    void showSettings(UF16x2 minValue, UF16x2 maxValue, const char *name, UF16x2 value)
+    void showSettings(F16x3 minValue, F16x3 maxValue, const char *name, F16x3 value)
     {
         display.clearDisplay();
         display.setTextSize(1);
@@ -144,22 +144,22 @@ namespace screen
         display.display();
     }
 
-    void showCalibrationInfo(UF16x2 ph7V, UF16x2 ph4V, UF16x2 phFactor) 
+    void showCalibrationInfo(F16x3 ph7V, F16x3 ph4V, F16x3 phFactor) 
     {
         display.clearDisplay();
         display.setTextSize(1);
         display.println("Kalibracja PH");
         display.println();
         display.print("ph7V: ");
-        display.println(ph7V.as_float());
+        display.println(ph7V.as_float(),3);
         display.print("ph4V: ");
-        display.println(ph4V.as_float());
-        display.print("phFactor: ");
-        display.println(phFactor.as_float());
+        display.println(ph4V.as_float(),3);
+        display.print("phFact.: ");
+        display.println(phFactor.as_float(),3);
         display.display();
     }
 
-    void showCalibration(CalibrationPhase phase, UF16x2 voltage, bool blink){
+    void showCalibration(CalibrationPhase phase, F16x3 voltage, bool blink){
 	    display.clearDisplay();
 		display.setTextSize(1);
 		display.print("(");
@@ -170,14 +170,16 @@ namespace screen
         switch (phase)
         {
             case CalibrationPhase::eCalibrationPh4Stable:
-                display.println("Stabilizacja PH=4");
+                display.println("Stabiliz.. Ph4");
                 display.print("V: ");
-		        display.print(voltage.as_float(),3);
+		        display.println(voltage.as_float(),3);
+                display.println();
                 break;
             case CalibrationPhase::eCalibrationPh7Stable:
-                display.println("Stabilizacja PH=7");
+                display.println("Stabiliz.. Ph7");
                 display.print("V: ");
-		        display.print(voltage.as_float(),3);
+		        display.println(voltage.as_float(),3);
+                display.println();
                 break;
             case CalibrationPhase::eCalibrationPh7Read:
                 display.println("Umiesc sonde");

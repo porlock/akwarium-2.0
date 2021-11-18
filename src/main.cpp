@@ -26,7 +26,7 @@ namespace control
     bool hclOn = false;
     bool tempOn = false;
 
-    void heaterControl(UF16x2 temp)
+    void heaterControl(F16x3 temp)
     {
         if (temp < settings.tempSettings.down || tempOn)
         {
@@ -42,7 +42,7 @@ namespace control
         }
     }
 
-    void hclControll(UF16x2 pH)
+    void hclControll(F16x3 pH)
     {
         if (pH > settings.phSettings.up || hclOn)
         {
@@ -134,6 +134,8 @@ void loop()
     {
         probing::runLoop();
         control::runLoop();
+        //Serial.println(analogRead(Pins::eAnalogPinPH));
+        //delay(500);
     }
 
     if (g_currentScreen != g_nextScreen)
