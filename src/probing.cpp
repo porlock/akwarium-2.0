@@ -44,11 +44,11 @@ namespace probing
     void readPH()
     {
         uint16_t filteredRead = voltageAnalogFilter(analogRead(Pins::eAnalogPinPH));
-        Serial.print("analog raw:  ");
-        Serial.println(analogRead(Pins::eAnalogPinPH));
-        readings.phVoltage = (5.0f / 1024.0f) * filteredRead;
-        Serial.print("V filtered: ");
-        Serial.println(readings.phVoltage.as_float() );
+        //Serial.print("analog raw:  ");
+        //Serial.println(analogRead(Pins::eAnalogPinPH));
+        readings.phVoltage = (settings.vRef / 1024.0f) * filteredRead;
+        //Serial.print("V filtered: ");
+        //Serial.println(readings.phVoltage.as_float());
         readings.ph = 7.0f + ((settings.phCalibrationSettings.ph7V - readings.phVoltage).as_float() / settings.phCalibrationSettings.phFactor.as_float());
     }
 

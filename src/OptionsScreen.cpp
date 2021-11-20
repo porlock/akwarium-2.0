@@ -112,7 +112,7 @@ void OptionsScreen::render()
                 screen::showClickOption("Reset ustawien");
                 break;
             case SettingsScreens::eSetPhCalibration:
-                screen::showCalibrationInfo(m_settings.phCalibrationSettings.ph7V, m_settings.phCalibrationSettings.ph4V, m_settings.phCalibrationSettings.phFactor);
+                screen::showCalibrationInfo(m_settings.phCalibrationSettings.ph7V, m_settings.phCalibrationSettings.ph4V, m_settings.phCalibrationSettings.phFactor, probing::readings.phVoltage);
                 break;
             }
         }

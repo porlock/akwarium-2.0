@@ -24,7 +24,7 @@ namespace screen
 	void showSettings(F16x3, F16x3, const char *, F16x3);
 	void showSettings(uint16_t, uint16_t, const char *, uint16_t);
 	void showClickOption(const char *, uint16_t = 1, uint16_t = 0);
-	void showCalibrationInfo(F16x3 ph7V, F16x3 ph4V, F16x3 phFactor);
+	void showCalibrationInfo(F16x3 ph7V, F16x3 ph4V, F16x3 phFactor, F16x3 voltage);
 	void showCalibration(CalibrationPhase phase, F16x3 voltage = 0, bool blink = false);
 	void showMemmoryError();
 	void showSave();

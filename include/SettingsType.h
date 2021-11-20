@@ -28,8 +28,9 @@ struct SettingsType
     {
         uint16_t barLenght = 15;
     } screenSettings;
-
-    uint32_t eepromCheck = 3768890503;
+    float vRef = 4.49f;
+    // musi byc zadeklarowany ostatni
+    uint32_t eepromCheck = 3768890503;    
 };
 
 extern SettingsType defaultSettings;

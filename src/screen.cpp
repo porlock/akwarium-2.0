@@ -144,7 +144,7 @@ namespace screen
         display.display();
     }
 
-    void showCalibrationInfo(F16x3 ph7V, F16x3 ph4V, F16x3 phFactor) 
+    void showCalibrationInfo(F16x3 ph7V, F16x3 ph4V, F16x3 phFactor, F16x3 voltage) 
     {
         display.clearDisplay();
         display.setTextSize(1);
@@ -156,6 +156,8 @@ namespace screen
         display.println(ph4V.as_float(),3);
         display.print("phFact.: ");
         display.println(phFactor.as_float(),3);
+        display.print("Biez. V: ");
+        display.println(voltage.as_float(),3);
         display.display();
     }
 
@@ -244,5 +246,7 @@ namespace screen
         display.println("zapisane");
         display.display();
     }
+
+    
 
 }

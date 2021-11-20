@@ -130,12 +130,10 @@ void loop()
         break;
     }
 
-    if (g_currentScreen != eScreenSettings)
+    if (g_currentScreen != eScreenPhCalibraton)
     {
         probing::runLoop();
         control::runLoop();
-        //Serial.println(analogRead(Pins::eAnalogPinPH));
-        //delay(500);
     }
 
     if (g_currentScreen != g_nextScreen)

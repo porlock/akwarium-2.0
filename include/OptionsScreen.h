@@ -4,6 +4,7 @@
 #include "screen.h"
 #include "ScreenManager.h"
 #include <EEPROM.h>
+#include "probing.h"
 
 class OptionsScreen
 {
