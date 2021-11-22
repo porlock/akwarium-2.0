@@ -39,7 +39,7 @@ namespace probing
     }
 
     /*
-    F16x3 readV(uint16_t pause, uint16_t loops)
+    F32x3 readV(uint16_t pause, uint16_t loops)
     {
         SMA<30> filter;
         uint32_t analogRead;

@@ -53,7 +53,7 @@ void PhCalibrationScreen::control(JoyStatus joyState)
             }
             else if (m_currentCalibrationPhase == CalibrationPhase::eCalibrationPh4Stable && isConstant())
             {                
-                F16x3 absVotage;
+                F32x3 absVotage;
                 if (m_settings.phCalibrationSettings.ph7V >= m_voltage)
                     absVotage = m_settings.phCalibrationSettings.ph7V - m_voltage;
                 else
@@ -68,7 +68,7 @@ void PhCalibrationScreen::control(JoyStatus joyState)
 
 bool PhCalibrationScreen::isConstant(uint16_t loops)
 {
-    F16x3 absVotage;
+    F32x3 absVotage;
 
     if (m_voltage >= m_voltagePrev)
         absVotage = m_voltage - m_voltagePrev;

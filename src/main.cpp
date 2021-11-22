@@ -26,7 +26,7 @@ namespace control
     bool hclOn = false;
     bool tempOn = false;
 
-    void heaterControl(F16x3 temp)
+    void heaterControl(F32x3 temp)
     {
         if (temp < settings.tempSettings.down || tempOn)
         {
@@ -42,7 +42,7 @@ namespace control
         }
     }
 
-    void hclControll(F16x3 pH)
+    void hclControll(F32x3 pH)
     {
         if (pH > settings.phSettings.up || hclOn)
         {

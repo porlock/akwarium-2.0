@@ -12,9 +12,9 @@ namespace probing
 {
     struct ReadingsType
     {
-        F16x3 ph;
-        F16x3 temp;
-        F16x3 phVoltage;
+        F32x3 ph;
+        F32x3 temp;
+        F32x3 phVoltage;
         bool waterLevel;
     };
     extern ReadingsType readings;
@@ -29,5 +29,5 @@ namespace probing
 
     void initTemperatureSensor();
 
-    F16x3 readV(uint16_t delay = 5, uint16_t loops = 10);
+    F32x3 readV(uint16_t delay = 5, uint16_t loops = 10);
 }

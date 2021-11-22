@@ -76,7 +76,7 @@ namespace screen
         clearScreen();
     }
 
-    void showReadings(uint16_t bottomBarLenght, const char *name, F16x3 value, bool showRefreshIcon)
+    void showReadings(uint16_t bottomBarLenght, const char *name, F32x3 value, bool showRefreshIcon)
     {
         display.clearDisplay();
         display.setTextColor(BLACK);
@@ -129,7 +129,7 @@ namespace screen
         display.display();
     }
 
-    void showSettings(F16x3 minValue, F16x3 maxValue, const char *name, F16x3 value)
+    void showSettings(F32x3 minValue, F32x3 maxValue, const char *name, F32x3 value)
     {
         display.clearDisplay();
         display.setTextSize(1);
@@ -144,7 +144,7 @@ namespace screen
         display.display();
     }
 
-    void showCalibrationInfo(F16x3 ph7V, F16x3 ph4V, F16x3 phFactor, F16x3 voltage) 
+    void showCalibrationInfo(F32x3 ph7V, F32x3 ph4V, F32x3 phFactor, F32x3 voltage) 
     {
         display.clearDisplay();
         display.setTextSize(1);
@@ -161,7 +161,7 @@ namespace screen
         display.display();
     }
 
-    void showCalibration(CalibrationPhase phase, F16x3 voltage, bool blink){
+    void showCalibration(CalibrationPhase phase, F32x3 voltage, bool blink){
 	    display.clearDisplay();
 		display.setTextSize(1);
 		display.print("(");
