@@ -29,5 +29,5 @@ namespace probing
 
     void initTemperatureSensor();
 
-    F16x3 readV( uint16_t delay=5, uint16_t loops=10);
+    F16x3 readV(uint16_t delay = 5, uint16_t loops = 10);
 }
