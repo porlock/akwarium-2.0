@@ -44,12 +44,14 @@ namespace probing
     void readPH()
     {
         uint16_t filteredRead = voltageAnalogFilter(analogRead(Pins::eAnalogPinPH));
-        //Serial.print("analog raw:  ");
-        //Serial.println(analogRead(Pins::eAnalogPinPH));
+        // Serial.print("analog raw:  ");
+        // Serial.println(analogRead(Pins::eAnalogPinPH));
         readings.phVoltage = (settings.vRef / 1024.0f) * filteredRead;
-        //Serial.print("V filtered: ");
-        //Serial.println(readings.phVoltage.as_float());
+        // Serial.print("V filtered: ");
+        // Serial.println(readings.phVoltage.as_float());
         readings.ph = 7.0f + ((settings.phCalibrationSettings.ph7V - readings.phVoltage).as_float() / settings.phCalibrationSettings.phFactor.as_float());
+        if (readings.ph < 0) readings.ph = 0;
+        else if (readings.ph > 14) readings.ph = 14;
     }
 
     void readTemp()
