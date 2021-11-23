@@ -1,5 +1,4 @@
 #include "OptionsScreen.h"
-#include <EEPROM.h>
 
 OptionsScreen::OptionsScreen(SettingsType &_settings)
     : m_settings(_settings),
@@ -13,7 +12,7 @@ void OptionsScreen::changeSetting(uint16_t screenState, bool add)
     switch (screenState)
     {
     case SettingsScreens::eSetTempDown:
-        if (add && m_settings.tempSettings.down < settingsLimits.tempMax)
+        if (add && m_settings.tempSettings.down < min(settingsLimits.tempMax, m_settings.tempSettings.up - settingsGrades.tempGrade))
         {
             m_settings.tempSettings.down += settingsGrades.tempGrade;
         }
@@ -27,13 +26,13 @@ void OptionsScreen::changeSetting(uint16_t screenState, bool add)
         {
             m_settings.tempSettings.up += settingsGrades.tempGrade;
         }
-        else if (!add && m_settings.tempSettings.up > settingsLimits.tempMin)
+        else if (!add && m_settings.tempSettings.up > max(settingsLimits.tempMin, m_settings.tempSettings.down + settingsGrades.tempGrade))
         {
             m_settings.tempSettings.up -= settingsGrades.tempGrade;
         }
         break;
     case SettingsScreens::eSetPhDown:
-        if (add && m_settings.phSettings.down < settingsLimits.phMax)
+        if (add && m_settings.phSettings.down <  min(settingsLimits.phMax, m_settings.phSettings.up - settingsGrades.phGrade))
         {
             m_settings.phSettings.down += settingsGrades.phGrade;
         }
@@ -47,7 +46,7 @@ void OptionsScreen::changeSetting(uint16_t screenState, bool add)
         {
             m_settings.phSettings.up += settingsGrades.phGrade;
         }
-        else if (!add && m_settings.phSettings.up > settingsLimits.phMin)
+        else if (!add && m_settings.phSettings.up > max(settingsLimits.phMin, m_settings.phSettings.down + settingsGrades.phGrade))
         {
             m_settings.phSettings.up -= settingsGrades.phGrade;
         }
@@ -88,17 +87,17 @@ void OptionsScreen::render()
         {
             switch (m_screenState)
             {
-            case SettingsScreens::eSetTempUp:
-                screen::showSettings(max(settingsLimits.tempMin, m_settings.tempSettings.down), settingsLimits.tempMax, "Gor temp (C):", m_settings.tempSettings.up);
-                break;
             case SettingsScreens::eSetTempDown:
-                screen::showSettings(settingsLimits.tempMin, settingsLimits.tempMax, "Dol temp (C):", m_settings.tempSettings.down);
+                screen::showSettings(settingsLimits.tempMin, min(settingsLimits.tempMax, m_settings.tempSettings.up - settingsGrades.tempGrade), "Dol temp (C):", m_settings.tempSettings.down);
                 break;
-            case SettingsScreens::eSetPhUp:
-                screen::showSettings(settingsLimits.phMin, settingsLimits.phMax, "Gor ph:", m_settings.phSettings.up);
+            case SettingsScreens::eSetTempUp:
+                screen::showSettings(max(settingsLimits.tempMin, m_settings.tempSettings.down + settingsGrades.tempGrade), settingsLimits.tempMax, "Gor temp (C):", m_settings.tempSettings.up);
                 break;
             case SettingsScreens::eSetPhDown:
-                screen::showSettings(settingsLimits.phMin, settingsLimits.phMax, "Dol ph:", m_settings.phSettings.down);
+                screen::showSettings(settingsLimits.phMin, min(settingsLimits.phMax, m_settings.phSettings.up - settingsGrades.phGrade), "Dol ph:", m_settings.phSettings.down);
+                break;
+            case SettingsScreens::eSetPhUp:
+                screen::showSettings(max(settingsLimits.phMin, m_settings.phSettings.down + settingsGrades.phGrade), settingsLimits.phMax, "Gor ph:", m_settings.phSettings.up);
                 break;
             case SettingsScreens::eSetPhTime:
                 screen::showSettings(settingsLimits.phTimeMin, settingsLimits.phTimeMax, "Czas ph (s):", m_settings.phSettings.onTime);
@@ -113,7 +112,7 @@ void OptionsScreen::render()
                 screen::showClickOption("Reset ustawien");
                 break;
             case SettingsScreens::eSetPhCalibration:
-                screen::showCalibrationInfo(m_settings.phCalibrationSettings.ph7V,m_settings.phCalibrationSettings.ph4V,m_settings.phCalibrationSettings.phFactor);
+                screen::showCalibrationInfo(m_settings.phCalibrationSettings.ph7V, m_settings.phCalibrationSettings.ph4V, m_settings.phCalibrationSettings.phFactor, probing::readings.phVoltage);
                 break;
             }
         }
@@ -174,7 +173,7 @@ void OptionsScreen::control(JoyStatus joyState)
             case SettingsScreens::eSetDefaults:
                 m_screenStatusState = SettingsStatusScreens::eOptionsDefault;
                 m_screenState = SettingsScreens::eSetBegin;
-                //defreferencja, zapisanie w miesjscu na ktore wskasuje wkaźnik
+                // defreferencja, zapisanie w miesjscu na ktore wskasuje wkaźnik
                 //*settingsPointer = SettingsType();
                 m_settings = defaultSettings;
                 m_displaySettingScreens = false;

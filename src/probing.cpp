@@ -4,10 +4,14 @@ namespace probing
 {
 
     uint32_t nextUpdateProbing = 0;
+    uint32_t nextUpdateTemp = 0;
     ReadingsType readings{6.5, 27, 0, false};
 
     bool aquariumTempError = false;
     SMA<20> voltageAnalogFilter;
+
+    uint16_t tempResolution = 11;
+    uint32_t tempDelayInMillis = 750 / (1 << (12 - tempResolution));
 
     // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
     OneWire oneWire(Pins::eDigitalPinTempIn);
@@ -26,10 +30,16 @@ namespace probing
             screen::iconsIndicator.error = true;
             aquariumTempError = true;
         }
+        else
+        {
+            sensors.setResolution(aquariumThermometer, tempResolution);
+            sensors.setWaitForConversion(false);
+            sensors.requestTemperatures();
+        }
     }
 
     /*
-    UF16x2 readV(uint16_t pause, uint16_t loops)
+    F32x3 readV(uint16_t pause, uint16_t loops)
     {
         SMA<30> filter;
         uint32_t analogRead;
@@ -43,10 +53,17 @@ namespace probing
 
     void readPH()
     {
-
-        uint32_t analogRead = voltageAnalogFilter(Pins::eAnalogPinPH);
-        readings.phVoltage = (5.0f / 1024.0f) * analogRead;
-        readings.ph = (UF16x2)7.0f + ((settings.phCalibrationSettings.ph7V - readings.phVoltage) / settings.phCalibrationSettings.phFactor);
+        uint16_t filteredRead = voltageAnalogFilter(analogRead(Pins::eAnalogPinPH));
+        // Serial.print("analog raw:  ");
+        // Serial.println(analogRead(Pins::eAnalogPinPH));
+        readings.phVoltage = (settings.vRef / 1024.0f) * filteredRead;
+        // Serial.print("V filtered: ");
+        // Serial.println(readings.phVoltage.as_float());
+        readings.ph = 7.0f + ((settings.phCalibrationSettings.ph7V - readings.phVoltage).as_float() / settings.phCalibrationSettings.phFactor.as_float());
+        if (readings.ph < 0)
+            readings.ph = 0;
+        else if (readings.ph > 14)
+            readings.ph = 14;
     }
 
     void readTemp()
@@ -54,7 +71,10 @@ namespace probing
         if (aquariumTempError)
             readings.temp = 0;
         else
+        {
             readings.temp = sensors.getTempC(aquariumThermometer);
+            sensors.requestTemperatures();            
+        }
     }
 
     void readWaterLevel()
@@ -69,6 +89,11 @@ namespace probing
             nextUpdateProbing = millis();
             readWaterLevel();
             readPH();
+        }
+
+        if (millis() - nextUpdateTemp > tempDelayInMillis)
+        {
+            nextUpdateTemp = millis();
             readTemp();
         }
     }

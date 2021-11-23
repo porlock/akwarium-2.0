@@ -26,7 +26,7 @@ namespace control
     bool hclOn = false;
     bool tempOn = false;
 
-    void heaterControl(UF16x2 temp)
+    void heaterControl(F32x3 temp)
     {
         if (temp < settings.tempSettings.down || tempOn)
         {
@@ -42,7 +42,7 @@ namespace control
         }
     }
 
-    void hclControll(UF16x2 pH)
+    void hclControll(F32x3 pH)
     {
         if (pH > settings.phSettings.up || hclOn)
         {
@@ -130,7 +130,7 @@ void loop()
         break;
     }
 
-    if (g_currentScreen != eScreenSettings)
+    if (g_currentScreen != eScreenPhCalibraton)
     {
         probing::runLoop();
         control::runLoop();

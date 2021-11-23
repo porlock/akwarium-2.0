@@ -15,8 +15,8 @@ private:
     uint32_t m_nextUpdateJoystick;
     CalibrationPhase m_currentCalibrationPhase;
     uint16_t m_constLoopsCounter;
-    UF16x2 m_voltage;
-    UF16x2 m_voltagePrev;
+    F32x3 m_voltage;
+    F32x3 m_voltagePrev;
     bool isConstant(uint16_t loops = 500);
     bool m_blink;
 
