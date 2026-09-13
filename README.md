@@ -1,109 +1,109 @@
 # Akwarium 2.0
 
-Sterownik akwarium oparty na **Arduino Nano (ATmega328)**. Mierzy temperaturę i pH wody, pokazuje odczyty na wyświetlaczu Nokia 5110 i pozwala zmieniać ustawienia za pomocą joysticka.
+An aquarium controller built on **Arduino Nano (ATmega328)**. It measures water temperature and pH, displays readings on a Nokia 5110 LCD, and provides a joystick-operated settings menu.
 
-Projekt powstał z myślą o zebraniu podstawowej kontroli akwarium w jednym urządzeniu: podglądzie parametrów wody, sterowaniu grzałką oraz automatyzacji obniżania pH i uzupełniania wody. Działa lokalnie, bez połączenia z internetem. Część automatyki wymaga jeszcze dokończenia — szczegóły poniżej.
+The project brings basic aquarium monitoring and control into a single device: checking water parameters, controlling a heater, and automating pH reduction and water top-ups. It runs locally without an internet connection. Some automation features still need work, as described below.
 
-## Co robi
+## Features
 
-- **Pomiar temperatury** — odczytuje pierwszy czujnik na magistrali OneWire przez bibliotekę DallasTemperature.
-- **Pomiar pH** — przelicza napięcie z analogowego modułu sondy na pH; średnia ruchoma z 20 próbek wygładza odczyt.
-- **Podgląd na ekranie** — pokazuje temperaturę, pH lub naprzemiennie oba parametry, a także ikony stanów sterowania i błędu.
-- **Sterowanie grzałką** — przełącza wyjście przekaźnika w zależności od temperatury.
-- **Konfiguracja joystickiem** — udostępnia progi temperatury i pH, czas impulsu dozowania oraz odstęp między impulsami.
-- **Kalibracja pH** — zawiera procedurę dwupunktową dla buforów pH 7 i pH 4.
-- **Pamięć ustawień** — zapisuje konfigurację w EEPROM i odczytuje ją po restarcie. Gdy znacznik danych jest niezgodny, korzysta z ustawień domyślnych.
+- **Temperature monitoring** — reads the first sensor on the OneWire bus using DallasTemperature.
+- **pH monitoring** — converts the analog probe module's voltage into pH, smoothing readings with a 20-sample moving average.
+- **LCD dashboard** — displays temperature, pH, or alternating readings, along with control status and error icons.
+- **Heater control** — switches a relay output according to water temperature.
+- **Joystick configuration** — provides temperature and pH thresholds, dosing pulse duration, and pulse interval settings.
+- **pH calibration** — includes a two-point calibration procedure using pH 7 and pH 4 buffers.
+- **Persistent settings** — saves configuration to EEPROM and loads it after a restart. If the stored data marker does not match, the controller uses its defaults.
 
-## Stan automatyki
+## Automation status
 
-To projekt rozwojowy. Obecny kod ma następujące ograniczenia:
+This is a work in progress. The current implementation has these limitations:
 
-| Obszar | Obecne zachowanie |
+| Area | Current behavior |
 | --- | --- |
-| Grzałka | Włącza się poniżej dolnego progu i wyłącza powyżej tego samego progu. Górny próg jest dostępny w menu, ale nie jest wykorzystywany w sterowaniu — nie ma jeszcze histerezy między dwoma progami. |
-| Obniżanie pH | Logika wyjścia nazwanego `HCL` przewiduje cykliczne dozowanie po przekroczeniu górnego progu, aż pH spadnie poniżej dolnego. W `RelayType::setClockOn()` znajduje się jednak deklaracja `void setOn();` zamiast wywołania `setOn();`, więc impuls nie załącza wyjścia. |
-| Dolewka | Jest wyjście przekaźnika i logika sterowania, ale `readWaterLevel()` zawsze ustawia `false`. Odczyt czujnika poziomu wody nie został zaimplementowany. |
-| Kalibracja | W czasie wyświetlania ekranu kalibracji główna pętla pomiarów i sterowania jest pomijana. Nie oznacza to automatycznego wyłączenia wcześniej aktywnych wyjść. |
-| Błąd temperatury | Brak czujnika przy starcie sygnalizuje błąd i ustawia odczyt na 0°C. Sterowanie grzałką nie blokuje się z tego powodu. |
+| Heater | Turns on below the lower threshold and off above that same threshold. The upper threshold is available in the menu but is not used by the control logic, so two-threshold hysteresis is not implemented. |
+| pH reduction | The output named `HCL` is intended to dose periodically after pH exceeds the upper threshold, until it drops below the lower threshold. However, `RelayType::setClockOn()` contains the declaration `void setOn();` instead of the call `setOn();`, so the pulse does not activate the output. |
+| Water top-up | A relay output and control logic exist, but `readWaterLevel()` always sets `false`. Water-level sensor input is not implemented. |
+| Calibration | While the calibration screen is active, the main measurement and control loop is skipped. Previously active outputs are not automatically switched off. |
+| Temperature error | A missing sensor at startup triggers an error indication and sets the reading to 0°C. This does not inhibit heater control. |
 
-Przed użyciem automatyki w działającym akwarium należy poprawić te ograniczenia i sprawdzić zachowanie wyjść oraz obsługę awarii na sprzęcie.
+Before using the automation in an operating aquarium, address these limitations and verify output behavior and fault handling on the hardware.
 
-## Sprzęt
+## Hardware
 
-- Arduino Nano z ATmega328, zgodnie z konfiguracją `nanoatmega328`.
-- Wyświetlacz Nokia 5110 ze sterownikiem PCD8544.
-- Czujnik temperatury zgodny z OneWire i DallasTemperature, np. DS18B20.
-- Sonda pH z modułem udostępniającym analogowy sygnał napięciowy.
-- Joystick analogowy z przyciskiem oraz sygnalizator dźwiękowy.
-- Odpowiednie moduły wykonawcze dla grzałki, dozownika i planowanej dolewki.
+- Arduino Nano with ATmega328, matching the `nanoatmega328` configuration.
+- Nokia 5110 LCD with a PCD8544 controller.
+- A temperature sensor compatible with OneWire and DallasTemperature, such as a DS18B20.
+- A pH probe with a module providing an analog voltage output.
+- An analog joystick with a push button and a sound indicator.
+- Suitable actuator modules for the heater, dosing device, and planned water top-up system.
 
-Przypisanie sygnałów w kodzie:
+Signal assignments in the code:
 
-| Sygnał | Pin Nano |
+| Signal | Nano pin |
 | --- | --- |
-| Pomiar temperatury OneWire | D4 |
-| Wejście analogowe pH | A6 |
+| OneWire temperature sensor | D4 |
+| Analog pH input | A6 |
 | Joystick X / Y | A0 / A1 |
-| Przycisk joysticka | D12 |
-| Sygnalizator dźwiękowy | D6 |
-| Wyjście `HCL` | D2 |
-| Wyjście grzałki | D3, logika aktywna stanem niskim |
-| Wyjście dolewki | D5 |
+| Joystick button | D12 |
+| Sound indicator | D6 |
+| `HCL` output | D2 |
+| Heater output | D3, active-low logic |
+| Water top-up output | D5 |
 
-Wyświetlacz jest inicjalizowany w `src/screen.cpp` przez `Adafruit_PCD8544(11, 10, 9, 8)`. Przed podłączeniem należy sprawdzić znaczenie argumentów tego konstruktora w używanej wersji biblioteki. Powyższa tabela opisuje sygnały programu, a nie kompletny schemat połączeń i zasilania.
+The display is initialized in `src/screen.cpp` with `Adafruit_PCD8544(11, 10, 9, 8)`. Before wiring it, check the constructor arguments for the library version in use. The table above documents software signal assignments, not a complete wiring and power schematic.
 
-## Budowanie i wgrywanie
+## Build and upload
 
-Projekt korzysta z **PlatformIO** i frameworka Arduino. Zależności oraz ich wersje znajdują się w `platformio.ini`: Adafruit GFX, Adafruit PCD8544, OneWire i DallasTemperature.
+The project uses **PlatformIO** with the Arduino framework. Dependencies and versions are declared in `platformio.ini`: Adafruit GFX, Adafruit PCD8544, OneWire, and DallasTemperature.
 
-1. Otwórz katalog projektu w PlatformIO, np. w Visual Studio Code z rozszerzeniem PlatformIO IDE.
-2. Podłącz Arduino Nano przez USB.
-3. Zbuduj i wgraj program z interfejsu PlatformIO lub terminala:
+1. Open the project folder in PlatformIO, for example in Visual Studio Code with the PlatformIO IDE extension.
+2. Connect the Arduino Nano over USB.
+3. Build and upload using the PlatformIO interface or terminal:
 
    ```sh
    pio run -e nanoatmega328
    pio run -e nanoatmega328 --target upload
    ```
 
-4. Opcjonalnie uruchom monitor portu szeregowego:
+4. Optionally open the serial monitor:
 
    ```sh
    pio device monitor --baud 9600
    ```
 
-## Obsługa
+## Controls
 
-Na ekranie głównym ruch joysticka w lewo lub w prawo przełącza widoki odczytów. Naciśnięcie przycisku otwiera ustawienia.
+On the main screen, move the joystick left or right to switch between reading views. Press the button to open settings.
 
-W ustawieniach:
+In the settings menu:
 
-- **Lewo / prawo** — poprzednia lub następna pozycja.
-- **Góra / dół** — zmiana wartości.
-- **Przycisk** — wykonanie wybranej akcji: zapis, reset lub kalibracja; na pozycji liczbowej powrót do ekranu głównego.
+- **Left / right** — select the previous or next item.
+- **Up / down** — change the value.
+- **Button** — perform the selected action (save, reset, or calibrate), or return to the main screen when a numeric setting is selected.
 
-Zmiany ustawień działają w pamięci bieżącej sesji. Aby zachować je po odłączeniu zasilania, wybierz **„Zapis ustawien”**. Dotyczy to również konfiguracji po kalibracji i przywróceniu wartości domyślnych.
+Setting changes apply to the current session. To retain them after power is disconnected, select **"Zapis ustawien" (Save settings)**. This also applies after calibration or restoring defaults. The device's menu labels are currently in Polish.
 
-Kalibracja prowadzi kolejno przez pomiary buforów pH 7 i pH 4, czekając na stabilizację napięcia. Kod oczekuje zakresów 2,9–3,1 V dla pH 7 oraz 3,3–3,5 V dla pH 4, więc procedura jest dopasowana do konkretnego toru pomiarowego. Wartość `vRef` w `include/SettingsType.h` również wymaga dopasowania do sprzętu.
+Calibration proceeds through pH 7 and pH 4 buffer measurements, waiting for the voltage to stabilize. The code expects 2.9–3.1 V for pH 7 and 3.3–3.5 V for pH 4, so the procedure is tailored to a particular measurement circuit. The `vRef` value in `include/SettingsType.h` also needs to match the hardware.
 
-## Ustawienia domyślne
+## Default settings
 
-Są to wartości zapisane w programie, a nie zalecenia dla konkretnej obsady akwarium.
+These are software defaults, not recommended parameters for a particular aquarium or its livestock.
 
-| Parametr | Wartość |
+| Parameter | Value |
 | --- | --- |
-| Dolny / górny próg pH | 6,5 / 6,7 |
-| Czas impulsu `HCL` | 3 s |
-| Okres impulsów `HCL` | 30 min |
-| Dolny / górny próg temperatury | 25 / 27°C |
-| Napięcie odniesienia do przeliczeń ADC (`vRef`) | 4,49 V |
+| Lower / upper pH threshold | 6.5 / 6.7 |
+| `HCL` pulse duration | 3 s |
+| `HCL` pulse interval | 30 min |
+| Lower / upper temperature threshold | 25 / 27°C |
+| ADC conversion reference voltage (`vRef`) | 4.49 V |
 
-## Organizacja kodu
+## Code layout
 
-- `src/main.cpp` — inicjalizacja, główna pętla i logika sterowania.
-- `src/probing.cpp` — odczyt czujników i przeliczanie pH.
-- `src/RelayType.cpp` — obsługa wyjść przekaźników.
-- `src/MainScreen.cpp`, `src/OptionsScreen.cpp`, `src/PhCalibrationScreen.cpp` — ekrany i ich obsługa.
-- `src/screen.cpp` — rysowanie interfejsu na LCD.
-- `include/SettingsType.h` — struktura konfiguracji i wartości domyślne.
-- `include/GlobalEnums.h` — przypisanie pinów i stany interfejsu.
-- `platformio.ini` — płytka docelowa, framework i biblioteki.
+- `src/main.cpp` — initialization, main loop, and control logic.
+- `src/probing.cpp` — sensor readings and pH conversion.
+- `src/RelayType.cpp` — relay output handling.
+- `src/MainScreen.cpp`, `src/OptionsScreen.cpp`, `src/PhCalibrationScreen.cpp` — screens and their interaction logic.
+- `src/screen.cpp` — LCD interface rendering.
+- `include/SettingsType.h` — configuration structure and defaults.
+- `include/GlobalEnums.h` — pin assignments and interface states.
+- `platformio.ini` — target board, framework, and libraries.
